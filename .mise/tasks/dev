@@ -4,9 +4,8 @@
 
 set -euo pipefail
 
-# Initial build and symlink
-mise run build
+# Symlink to vault
 bash tools/symlink.sh
 
-# Watch for changes
+# Watch for changes (builds on first run and then on file changes)
 mise watch build
