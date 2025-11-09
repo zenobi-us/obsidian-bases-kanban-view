@@ -41,7 +41,9 @@ const context = await esbuild.context({
   sourcemap: prod ? false : 'inline',
   treeShaking: true,
   outdir: './dist',
-undefined
+  loader: {
+    '.css': 'text',
+  },
 });
 
 await context.rebuild();
