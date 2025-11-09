@@ -570,7 +570,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				key: 'groupByPropertyId',
 				default: 'status',
 				placeholder: 'Property'
-			} as unknown as ViewOption
-		];
+			}
+		] as ViewOption[];
 	}
 }

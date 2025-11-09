@@ -1,6 +1,8 @@
 # Agent Guidelines for Obsidian Kanban Plugin
 
-undefined
+## Commands 
+
+Check `mise tasks` before assuming the normal place.
 
 ## Vault Configuration
 

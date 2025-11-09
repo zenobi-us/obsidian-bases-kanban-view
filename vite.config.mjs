@@ -62,6 +62,7 @@ export default defineConfig(({ mode }) => {
       minify: inProd,
       sourcemap: inProd ? false : 'inline',
       cssCodeSplit: false,
+
       emptyOutDir: inProd,
       outDir,
       rollupOptions: {

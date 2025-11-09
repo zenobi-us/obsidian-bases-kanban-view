@@ -499,5 +499,5 @@ export class CardRenderer {
 		const cardEl = document.createElement('div');
 		cardEl.className = 'kanban-card kanban-card-empty';
 		return cardEl;
-	}
+	} 
 }
