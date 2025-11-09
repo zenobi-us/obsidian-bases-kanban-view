@@ -3,19 +3,16 @@
 
 set -euo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$PROJECT_DIR"
-
 echo "Watching for changes in src/"
 echo "Press Ctrl+C to stop"
 echo ""
 
 # Watch for changes with polling (no external dependency)
-last_hash=$(find "$PROJECT_DIR/src" -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
+last_hash=$(find src -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
 
 while true; do
     sleep 2
-    current_hash=$(find "$PROJECT_DIR/src" -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
+    current_hash=$(find src -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
     
     if [ "$last_hash" != "$current_hash" ]; then
         echo "[$(date '+%H:%M:%S')] Changes detected, building..."

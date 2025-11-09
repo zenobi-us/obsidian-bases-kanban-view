@@ -3,8 +3,7 @@
 # Vault path configuration script
 # This script ensures the vault path is configured before running development tasks
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VAULT_PATH_FILE="$PROJECT_DIR/.notes/VAULT_PATH"
+VAULT_PATH_FILE=".notes/VAULT_PATH"
 
 # Function to get vault path (with user prompt if needed)
 get_vault_path() {
@@ -34,7 +33,7 @@ get_vault_path() {
     fi
     
     # Store the path
-    mkdir -p "$PROJECT_DIR/.notes"
+    mkdir -p .notes
     echo "$VAULT_PATH" > "$VAULT_PATH_FILE"
     echo "✅ Vault path saved to .notes/VAULT_PATH"
     echo ""

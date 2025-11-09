@@ -3,8 +3,7 @@
 
 set -euo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-VAULT_PATH_FILE="$PROJECT_DIR/.notes/VAULT_PATH"
+VAULT_PATH_FILE=".notes/VAULT_PATH"
 
 # Check if vault path is configured
 if [ ! -f "$VAULT_PATH_FILE" ]; then
@@ -29,9 +28,9 @@ mkdir -p "$PLUGIN_DIR"
 rm -f "$PLUGIN_DIR/dist"
 
 # Symlink the dist directory (force overwrite if it exists)
-ln -sf "$PROJECT_DIR/dist" "$PLUGIN_DIR/dist"
+ln -sf "$(pwd)/dist" "$PLUGIN_DIR/dist"
 
 # Copy manifest.json (non-symlinked, as it shouldn't change)
-cp "$PROJECT_DIR/manifest.json" "$PLUGIN_DIR/"
+cp manifest.json "$PLUGIN_DIR/"
 
 echo "✅ Symlinked plugin to: $PLUGIN_DIR"

@@ -4,9 +4,6 @@
 
 set -euo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$PROJECT_DIR"
-
 # Type check and build with esbuild
 if [ "${usage_watch:-false}" = "true" ]; then
   # Watch mode - run type check once, then watch esbuild

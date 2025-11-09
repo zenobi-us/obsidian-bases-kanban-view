@@ -4,8 +4,6 @@
 
 set -euo pipefail
 
-PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-
 echo "🔧 Kanban Bases View - Development Mode"
 echo ""
 
@@ -14,7 +12,7 @@ echo "Initial build..."
 mise run build
 
 # Symlink to vault
-bash "$PROJECT_DIR/tools/symlink.sh"
+bash tools/symlink.sh
 
 echo ""
 echo "Setup complete. Starting watch mode..."
