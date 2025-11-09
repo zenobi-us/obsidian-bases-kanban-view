@@ -3,3 +3,6 @@ node = "18"
 pnpm = "latest"
 shellcheck = "latest"
 "ubi:dimo414/bkt" = "0.8.2"
+
+[env]
+PATH = "./node_modules/.bin:${PATH}"
