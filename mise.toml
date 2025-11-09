@@ -2,3 +2,4 @@
 node = "18"
 pnpm = "latest"
 shellcheck = "latest"
+bkt = "ubi:dimo414/bkt"

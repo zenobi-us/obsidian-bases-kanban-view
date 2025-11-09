@@ -3,4 +3,4 @@
 
 set -euo pipefail
 
-pnpm install
+bkt --ttl=24h --modtime=pnpm-lock.yaml -- pnpm install
