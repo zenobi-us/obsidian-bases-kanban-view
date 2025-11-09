@@ -19,18 +19,4 @@ if [ ! -d "$VAULT_PATH/.obsidian" ]; then
     exit 1
 fi
 
-PLUGIN_DIR="$VAULT_PATH/.obsidian/plugins/obsidian-kanban-bases"
-
-# Create plugin directory if it doesn't exist
-mkdir -p "$PLUGIN_DIR"
-
-# Remove old symlink/dist if it exists
-rm -f "$PLUGIN_DIR/dist"
-
-# Symlink the dist directory (force overwrite if it exists)
-ln -sf "$(pwd)/dist" "$PLUGIN_DIR/dist"
-
-# Copy manifest.json (non-symlinked, as it shouldn't change)
-cp manifest.json "$PLUGIN_DIR/"
-
-echo "✅ Symlinked plugin to: $PLUGIN_DIR"
+undefined
