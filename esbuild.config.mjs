@@ -1,6 +1,8 @@
 import esbuild from "esbuild";
 import process from "process";
 import builtInModules from "builtin-modules";
+import fs from "fs";
+import path from "path";
 
 const banner =
 `/*
@@ -41,8 +43,15 @@ const context = await esbuild.context({
   outdir: './dist',
 });
 
+await context.rebuild();
+
+// Copy manifest.json to dist
+const manifestSrc = 'manifest.json';
+const manifestDst = path.join('dist', 'manifest.json');
+fs.copyFileSync(manifestSrc, manifestDst);
+console.log(`✓ Copied ${manifestSrc} to ${manifestDst}`);
+
 if (prod) {
-  await context.rebuild();
   process.exit(0);
 } else {
   await context.watch();
