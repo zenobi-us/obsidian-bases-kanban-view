@@ -16,17 +16,18 @@ A custom Obsidian Bases view that displays data in a **kanban board layout** wit
 
 ### Developer Installation
 
-For development, use the watch mode which auto-builds and installs:
+For development, use mise tasks which auto-builds and installs:
 
 ```bash
-make dev
+mise run dev
 ```
 
 This will:
-1. Build the plugin
-2. Copy to Obsidian plugin directory
-3. Watch for source changes
-4. Auto-rebuild and auto-install on every change
+1. Install dependencies (cached with bkt)
+2. Configure Obsidian vault path (if first time)
+3. Symlink plugin to vault
+4. Watch for source changes
+5. Auto-rebuild on every change
 
 Then reload Obsidian (Cmd+R on Mac, Ctrl+R on Windows/Linux) to see changes.
 
@@ -82,31 +83,7 @@ KanbanBasesViewPlugin
 - **Virtual Scrolling**: Activated for columns with 30+ items
 - **Persistence**: Column order saved to localStorage per grouping
 
-## Development
-
-### Watch and Auto-Rebuild
-
-```bash
-npm run dev
-```
-
-Rebuilds on source changes.
-
-### Manual Build
-
-```bash
-npm run build
-```
-
-Creates optimized `main.js`.
-
-### Development Install
-
-```bash
-bash tools/dev-install.sh
-```
-
-Auto-builds and installs to Obsidian on file changes.
+undefined
 
 ## Testing
 

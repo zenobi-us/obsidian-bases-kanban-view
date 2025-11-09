@@ -1,13 +1,10 @@
 # Agent Guidelines for Obsidian Kanban Plugin
 
-## Build & Development Commands
+undefined
 
-**Dev Mode:** `make dev` or `bash tools/dev.sh` - Watches `src/`, auto-rebuilds to `./dist/`, auto-installs to Obsidian (developer workflow)  
-**Build Once:** `make build` or `npm run build` - Compiles TypeScript, runs type-check, bundles with esbuild to `./dist/` (one-time)  
-**Type Check:** `make type-check` - Run TypeScript type checking only  
-**Clean:** `make clean` - Removes `./dist/` directory
+## Vault Configuration
 
-Build outputs go to `./dist/` (gitignored). No dedicated test framework exists. Manual testing is used (see TESTING.md).
+On first run of `make dev`, you'll be prompted to enter your Obsidian vault path (directory containing `.obsidian/`). This path is stored in `.notes/VAULT_PATH` (gitignored) so it persists across sessions. To change the vault path, edit `.notes/VAULT_PATH` directly or delete it to be prompted again on next `make dev` run.
 
 ## Code Style & Conventions
 
