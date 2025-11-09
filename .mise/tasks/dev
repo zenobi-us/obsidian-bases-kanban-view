@@ -18,5 +18,6 @@ echo ""
 echo "Setup complete. Starting watch mode..."
 echo ""
 
-# Run build in watch mode
-mise run build --watch
+# Watch for changes with esbuild
+tsc -noEmit
+node esbuild.config.mjs --watch

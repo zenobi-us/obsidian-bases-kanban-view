@@ -1,19 +1,8 @@
 #!/usr/bin/env bash
 #MISE description="Build the plugin (TypeScript + esbuild)"
-#USAGE flag "-w --watch" help="Watch for changes and rebuild"
 
 set -euo pipefail
 
 # Type check and build with esbuild
-if [ "${usage_watch:-false}" = "true" ]; then
-  # Watch mode - run type check once, then watch esbuild
-  echo "Running type check..."
-  tsc -noEmit
-  
-  echo "Watching for changes..."
-  node esbuild.config.mjs --watch
-else
-  # Normal build mode
-  tsc -noEmit
-  node esbuild.config.mjs production
-fi
+tsc -noEmit
+node esbuild.config.mjs production
