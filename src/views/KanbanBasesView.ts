@@ -305,14 +305,17 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			cardsContainer.removeClass('kanban-cards-container--dragover');
 		});
 
-		cardsContainer.addEventListener('drop', async (e: DragEvent) => {
-			e.preventDefault();
-			cardsContainer.removeClass('kanban-cards-container--dragover');
+	cardsContainer.addEventListener('drop', async (e: DragEvent) => {
+		e.preventDefault();
+		cardsContainer.removeClass('kanban-cards-container--dragover');
 
-			if (this.draggedEntry && this.draggedFromColumnId !== columnId) {
-				await this.updateEntryProperty(this.draggedEntry, columnId);
-			}
-		});
+		// Extract target column ID from the DOM to ensure we get the correct target
+		const targetColumnId = cardsContainer.closest('.kanban-column')?.getAttribute('data-column-id');
+		
+		if (this.draggedEntry && this.draggedFromColumnId !== targetColumnId && targetColumnId) {
+			await this.updateEntryProperty(this.draggedEntry, targetColumnId);
+		}
+	});
 
 		// Column reordering handlers
 		columnEl.addEventListener('dragover', (e: DragEvent) => {
@@ -535,11 +538,18 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				newValue: newColumnValue,
 			});
 
-			// TODO: Implement actual property update using Obsidian/Bases API
-			// Reference: TaskNotes plugin uses app.fileManager.processFrontMatter()
-			// or direct property update via Bases controller
+			// Update the entry's property using the file manager's processFrontMatter
+			await this.app.fileManager.processFrontMatter(entry.file, (frontmatter: any) => {
+				frontmatter[this.groupByPropertyId!] = newColumnValue;
+			});
 
-			// For now, re-render to handle any updates
+			console.log('[KanbanBasesView] Successfully updated entry property:', {
+				entryPath: entry.file.path,
+				propertyId: this.groupByPropertyId,
+				newValue: newColumnValue,
+			});
+
+			// Re-render to reflect the updated data
 			this.render();
 		} catch (error) {
 			console.error('[KanbanBasesView] Error updating entry property:', error);
