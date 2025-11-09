@@ -64,19 +64,33 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	onDataUpdated(): void {
+		if (!this.data) {
+			console.warn('[KanbanBasesView] onDataUpdated called but data is null');
+			return;
+		}
 		this.loadConfig();
 		this.render();
 	}
 
 	private render(): void {
+		console.debug('[KanbanBasesView] Rendering board', {
+			hasData: !!this.data,
+			hasGroupingProperty: !!this.groupByPropertyId,
+		});
+
+		if (!this.containerEl) {
+			console.warn('[KanbanBasesView] containerEl not initialized');
+			return;
+		}
+
 		this.containerEl.empty();
 
-		if (!this.config) {
+		if (!this.config || !this.data) {
 			this.renderNoGroupingError();
 			return;
 		}
 
-		if (!this.data || !this.data.data || this.data.data.length === 0) {
+		if (!this.data.data || this.data.data.length === 0) {
 			this.renderEmptyState();
 			return;
 		}
@@ -96,6 +110,12 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		const grouped = new Map<string, BasesEntry[]>();
 
 		if (!this.data || !this.data.data) {
+			console.warn('[KanbanBasesView] groupEntries called but data is missing');
+			return grouped;
+		}
+
+		if (!this.groupByPropertyId) {
+			console.warn('[KanbanBasesView] groupEntries called but groupByPropertyId is not set');
 			return grouped;
 		}
 
@@ -113,20 +133,40 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private renderNoGroupingError(): void {
+		if (!this.containerEl) {
+			console.error('[KanbanBasesView] Cannot render error: containerEl is null');
+			return;
+		}
 		const errorEl = this.containerEl.createDiv('kanban-error');
-		errorEl.createDiv('kanban-error-message', (el) => {
-			el.setText('No grouping property configured. Please select a property to group by.');
+		errorEl.createEl('p', {
+			text: 'No grouping property configured. Please select a "Group by" property in the view options.',
+			cls: 'kanban-error-message',
 		});
 	}
 
 	private renderEmptyState(): void {
+		if (!this.containerEl) {
+			console.error('[KanbanBasesView] Cannot render empty state: containerEl is null');
+			return;
+		}
 		const emptyEl = this.containerEl.createDiv('kanban-empty');
-		emptyEl.createDiv('kanban-empty-message', (el) => {
-			el.setText('No entries to display');
+		emptyEl.createEl('p', {
+			text: 'No items to display. Add items to this Base to see them in the Kanban view.',
+			cls: 'kanban-empty-message',
 		});
 	}
 
 	private renderBoard(): void {
+		if (!this.containerEl) {
+			console.error('[KanbanBasesView] Cannot render board: containerEl is null');
+			return;
+		}
+
+		if (!this.data || !this.data.data) {
+			console.warn('[KanbanBasesView] renderBoard called but data is missing');
+			return;
+		}
+
 		const boardEl = this.containerEl.createDiv('kanban-board');
 		const groupedEntries = this.groupEntries();
 
@@ -171,6 +211,15 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private renderColumn(boardEl: HTMLElement, columnId: string, entries: BasesEntry[]): void {
+		if (!boardEl || !columnId || !entries) {
+			console.warn('[KanbanBasesView] renderColumn called with invalid arguments', {
+				hasBoardEl: !!boardEl,
+				columnId,
+				hasEntries: !!entries,
+			});
+			return;
+		}
+
 		const columnEl = boardEl.createDiv('kanban-column');
 		columnEl.setAttribute('data-column-id', columnId);
 
@@ -288,13 +337,13 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 					});
 
 					// Render properties
-					if (this.config && this.allProperties) {
-						for (const propertyId of this.allProperties) {
+					if (this.hasValidProperties()) {
+						for (const propertyId of this.allProperties!) {
 							const value = entry.getValue(propertyId);
 							if (value) {
 								const propEl = card.createDiv('kanban-card-property');
 								propEl.createSpan('kanban-card-property-label', (el) => {
-									el.setText(this.config.getDisplayName(propertyId) + ': ');
+									el.setText(this.config!.getDisplayName(propertyId) + ': ');
 								});
 								const valueEl = propEl.createSpan('kanban-card-property-value');
 								
@@ -323,6 +372,14 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private renderCard(container: HTMLElement, entry: BasesEntry): void {
+		if (!container || !entry) {
+			console.warn('[KanbanBasesView] renderCard called with invalid arguments', {
+				hasContainer: !!container,
+				hasEntry: !!entry,
+			});
+			return;
+		}
+
 		const card = container.createDiv({ cls: 'kanban-card' });
 		card.draggable = true;
 		card.setAttribute('data-entry-path', entry.file.path);
@@ -345,14 +402,14 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			this.draggedFromColumnId = null;
 		});
 
-		// Render all visible properties (keep existing code)
-		if (this.config && this.allProperties) {
-			for (const propId of this.allProperties) {
+		// Render all visible properties
+		if (this.hasValidProperties()) {
+			for (const propId of this.allProperties!) {
 				const value = entry.getValue(propId);
 				if (value) {
 					const propEl = card.createDiv('kanban-card-property');
 					propEl.createSpan('kanban-card-property-label', (el) => {
-						el.setText(this.config.getDisplayName(propId) + ': ');
+						el.setText(this.config!.getDisplayName(propId) + ': ');
 					});
 					const valueEl = propEl.createSpan('kanban-card-property-value');
 					
@@ -392,21 +449,64 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 	private async updateEntryProperty(entry: BasesEntry, newColumnValue: string): Promise<void> {
 		try {
-			if (!this.groupByPropertyId || !this.data) return;
+			if (!this.groupByPropertyId || !this.data) {
+				console.warn('[KanbanBasesView] Cannot update: missing groupByPropertyId or data');
+				return;
+			}
 
-			// TODO: Implement actual property update using Obsidian/Bases API
-			// For now, log the update and re-render
-			console.log('Update entry property:', {
+			if (!entry || !newColumnValue) {
+				console.warn('[KanbanBasesView] Cannot update: missing entry or newColumnValue');
+				return;
+			}
+
+			console.log('[KanbanBasesView] Updating entry property:', {
 				entryPath: entry.file.path,
 				propertyId: this.groupByPropertyId,
 				newValue: newColumnValue,
 			});
 
-			// Re-render to see if data updates
+			// TODO: Implement actual property update using Obsidian/Bases API
+			// Reference: TaskNotes plugin uses app.fileManager.processFrontMatter()
+			// or direct property update via Bases controller
+
+			// For now, re-render to handle any updates
 			this.render();
 		} catch (error) {
-			console.error('Error updating entry property:', error);
+			console.error('[KanbanBasesView] Error updating entry property:', error);
 		}
+	}
+
+	private validateGroupingProperty(): boolean {
+		if (!this.groupByPropertyId) {
+			console.warn('[KanbanBasesView] groupByPropertyId is not set');
+			return false;
+		}
+
+		if (!this.allProperties || this.allProperties.length === 0) {
+			console.warn('[KanbanBasesView] No properties available');
+			return false;
+		}
+
+		if (!this.config) {
+			console.warn('[KanbanBasesView] No config available');
+			return false;
+		}
+
+		// Check if grouping property is in the available properties
+		const hasGroupingProperty = this.allProperties.some(prop =>
+			this.config!.getDisplayName(prop).toLowerCase() === this.groupByPropertyId!.toLowerCase()
+		);
+
+		if (!hasGroupingProperty) {
+			console.warn('[KanbanBasesView] Grouping property not found in available properties:', this.groupByPropertyId);
+			return false;
+		}
+
+		return true;
+	}
+
+	private hasValidProperties(): boolean {
+		return this.allProperties && this.allProperties.length > 0 && !!this.config;
 	}
 
 	static getViewOptions(): (() => ViewOption[]) {

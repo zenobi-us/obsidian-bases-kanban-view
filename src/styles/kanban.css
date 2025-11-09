@@ -92,17 +92,28 @@
 .kanban-error,
 .kanban-empty {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
 	height: 100%;
 	color: var(--text-muted);
+	padding: 20px;
+	text-align: center;
+}
+
+.kanban-error {
+	background: rgba(255, 0, 0, 0.02);
 }
 
 .kanban-error-message,
 .kanban-empty-message {
-	text-align: center;
-	font-size: 1.1em;
-	padding: 20px;
+	font-size: 1em;
+	line-height: 1.5;
+	max-width: 300px;
+}
+
+.kanban-error-message {
+	color: var(--text-error);
 }
 
 .kanban-card--dragging {
