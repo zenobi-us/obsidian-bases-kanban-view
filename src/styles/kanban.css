@@ -1,3 +1,4 @@
+/* Container uses flex for column layout */
 .kanban-bases-view-container {
 	display: flex;
 	flex-direction: column;
@@ -6,6 +7,7 @@
 	overflow: hidden;
 }
 
+/* Board uses flex for horizontal scrolling of columns */
 .kanban-board {
 	display: flex;
 	flex-direction: row;
@@ -14,12 +16,13 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 	flex: 1;
-	height: 100%;
+	align-items: start;
 }
 
+/* Column uses grid for header + cards layout */
 .kanban-column {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-rows: auto 1fr;
 	gap: 12px;
 	background: var(--background-secondary);
 	border-radius: 8px;
@@ -31,6 +34,7 @@
 	overflow: hidden;
 }
 
+/* Column header uses flexbox for title + count */
 .kanban-column-header {
 	display: flex;
 	flex-direction: row;
@@ -40,6 +44,7 @@
 	cursor: grab;
 	padding-bottom: 8px;
 	border-bottom: 1px solid var(--divider-color);
+	flex-shrink: 0;
 }
 
 .kanban-column-title {
@@ -51,15 +56,16 @@
 	font-size: 0.85em;
 	color: var(--text-muted);
 	margin-left: 8px;
+	white-space: nowrap;
 }
 
+/* Cards container uses flex column for vertical stacking */
 .kanban-cards-container {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	flex: 1;
 	min-height: 0;
 }
 
@@ -70,6 +76,7 @@
 	padding: 12px;
 	cursor: grab;
 	transition: box-shadow 0.2s ease, transform 0.2s ease;
+	flex-shrink: 0;
 }
 
 .kanban-card:hover {
@@ -77,17 +84,18 @@
 	transform: translateY(-2px);
 }
 
+/* Card properties use flex column for stacking */
 .kanban-card-property {
-	margin-bottom: 8px;
-	font-size: 0.9em;
 	display: flex;
 	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 8px;
+	font-size: 0.9em;
 }
 
 .kanban-card-property-label {
 	color: var(--text-muted);
 	font-weight: 500;
-	margin-bottom: 2px;
 }
 
 .kanban-card-property-value {
@@ -95,6 +103,7 @@
 	word-break: break-word;
 }
 
+/* Empty/error states use flex for centering */
 .kanban-error,
 .kanban-empty {
 	display: flex;
@@ -122,6 +131,7 @@
 	color: var(--text-error);
 }
 
+/* Drag states */
 .kanban-card--dragging {
 	opacity: 0.5;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
