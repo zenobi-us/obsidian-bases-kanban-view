@@ -1,0 +1,11 @@
+{
+  "id": "obsidian-kanban-bases",
+  "name": "Kanban Bases View",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "A kanban view for Obsidian database bases",
+  "author": "Obsidian",
+  "authorUrl": "https://obsidian.md",
+  "fundingUrl": "https://obsidian.md/pricing",
+  "isDesktopOnly": false
+}
