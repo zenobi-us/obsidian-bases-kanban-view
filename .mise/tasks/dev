@@ -1,94 +1,27 @@
 #!/usr/bin/env bash
-# mise description: Watch, rebuild, and auto-symlink plugin to Obsidian vault
+# mise description: Watch and rebuild on changes (full dev workflow)
 
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-VAULT_PATH_FILE="$PROJECT_DIR/.notes/VAULT_PATH"
 
-# Function to get vault path (with user prompt if needed)
-get_vault_path() {
-    # If file exists and points to valid path, use it
-    if [ -f "$VAULT_PATH_FILE" ]; then
-        VAULT_PATH=$(cat "$VAULT_PATH_FILE")
-        if [ -d "$VAULT_PATH/.obsidian" ]; then
-            echo "$VAULT_PATH"
-            return 0
-        fi
-    fi
-    
-    # File missing or path invalid - ask user
-    echo "🔍 Obsidian vault not configured"
-    echo ""
-    echo "Enter the path to your Obsidian vault (the directory containing .obsidian/):"
-    read -rp "Vault path: " VAULT_PATH
-    
-    # Validate path
-    if [ ! -d "$VAULT_PATH" ]; then
-        echo "❌ Directory doesn't exist: $VAULT_PATH"
-        exit 1
-    fi
-    
-    if [ ! -d "$VAULT_PATH/.obsidian" ]; then
-        echo "❌ Not an Obsidian vault (no .obsidian directory): $VAULT_PATH"
-        exit 1
-    fi
-    
-    # Store the path
-    mkdir -p "$PROJECT_DIR/.notes"
-    echo "$VAULT_PATH" > "$VAULT_PATH_FILE"
-    echo "✅ Vault path saved to .notes/VAULT_PATH"
-    echo ""
-    echo "$VAULT_PATH"
-}
-
-VAULT_PATH=$(get_vault_path)
-PLUGIN_DIR="$VAULT_PATH/.obsidian/plugins/obsidian-kanban-bases"
-
+# Run full dev workflow: setup vault, build, symlink, then watch
 echo "🔧 Kanban Bases View - Development Mode"
-echo "Vault: $VAULT_PATH"
-echo "Watching for changes and auto-building..."
-echo ""
-echo "Press Ctrl+C to stop"
 echo ""
 
-# Function to build and symlink
-build_and_symlink() {
-    echo "[$(date '+%H:%M:%S')] Building..."
-    cd "$PROJECT_DIR" || exit
-    
-    if npm run build > /dev/null 2>&1; then
-        # Create plugin directory if it doesn't exist
-        mkdir -p "$PLUGIN_DIR"
-        
-        # Create symlinks (force overwrite if they exist)
-        ln -sf "$PROJECT_DIR/dist" "$PLUGIN_DIR/dist"
-        ln -sf "$PROJECT_DIR/dist/main.js" "$PLUGIN_DIR/main.js"
-        
-        echo "[$(date '+%H:%M:%S')] ✅ Built and symlinked. Reload Obsidian to test (Cmd+R or Ctrl+R)"
-    else
-        echo "[$(date '+%H:%M:%S')] ❌ Build failed. Check npm run build output"
-    fi
-}
+# Setup vault
+bash "$PROJECT_DIR/tools/dev.sh"
 
-# Initial build and symlink setup
-build_and_symlink
+# Build
+echo "Building..."
+npm run build
 
-# Also copy manifest.json (doesn't change)
-mkdir -p "$PLUGIN_DIR"
-cp "$PROJECT_DIR/manifest.json" "$PLUGIN_DIR/"
+# Symlink
+bash "$PROJECT_DIR/tools/symlink.sh"
 
-echo "Watching for changes in src/"
+echo ""
+echo "Setup complete. Starting watch mode..."
+echo ""
 
-# Watch for changes with polling (no external dependency)
-last_hash=$(find "$PROJECT_DIR/src" -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
-
-while true; do
-    sleep 2
-    current_hash=$(find "$PROJECT_DIR/src" -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
-    
-    if [ "$last_hash" != "$current_hash" ]; then
-        build_and_symlink
-        last_hash=$current_hash
-    fi
-done
+# Watch for changes
+bash "$PROJECT_DIR/tools/watch.sh"

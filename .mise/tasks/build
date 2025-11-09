@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# mise description: Build the plugin (TypeScript + esbuild)
+
+set -euo pipefail
+
+npm run build
