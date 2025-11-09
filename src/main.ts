@@ -1,11 +1,17 @@
 import { Plugin } from 'obsidian';
 import { KanbanBasesView } from './views/KanbanBasesView';
-import './styles/kanban.css';
+import kanbanStyles from './styles/kanban.css';
 
 const KANBAN_VIEW_TYPE = 'kanban';
 
 export default class KanbanBasesViewPlugin extends Plugin {
 	async onload() {
+		// Inject styles into document head
+		const styleEl = document.createElement('style');
+		styleEl.textContent = kanbanStyles;
+		styleEl.id = 'kanban-bases-styles';
+		document.head.appendChild(styleEl);
+
 		this.registerBasesView(KANBAN_VIEW_TYPE, {
 			name: 'Kanban',
 			icon: 'layout-grid',
