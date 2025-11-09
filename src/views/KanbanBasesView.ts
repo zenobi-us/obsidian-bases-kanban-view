@@ -17,6 +17,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private draggedFromColumnId: string | null = null;
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
+	private seenColumnsMap: Map<string, Set<string>> = new Map();
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
 	readonly type = 'kanban';
@@ -37,12 +38,37 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				console.warn('Failed to load column order:', e);
 			}
 		}
+
+		// Load seen columns from config (official Obsidian API)
+		if (this.config) {
+			const seenColumnsJson = this.config.get('kanban-seenColumns');
+			if (seenColumnsJson && typeof seenColumnsJson === 'string') {
+				try {
+					const seenData = JSON.parse(seenColumnsJson);
+					this.seenColumnsMap = new Map(
+						Object.entries(seenData).map(([k, v]) => [k, new Set(v as string[])])
+					);
+					console.debug('[KanbanBasesView] Loaded seen columns:', Object.keys(seenData));
+				} catch (e) {
+					console.warn('[KanbanBasesView] Failed to load seen columns:', e);
+				}
+			}
+		}
 	}
 
 	private saveColumnOrder(): void {
 		const key = `kanban-column-order`;
 		const data = Object.fromEntries(this.columnOrderMap);
 		localStorage.setItem(key, JSON.stringify(data));
+
+		// Save seen columns to config (official Obsidian API)
+		const seenData = Object.fromEntries(
+			Array.from(this.seenColumnsMap.entries()).map(([k, v]) => [k, Array.from(v)])
+		);
+		if (this.config) {
+			this.config.set('kanban-seenColumns', JSON.stringify(seenData));
+			console.debug('[KanbanBasesView] Saved seen columns:', Object.keys(seenData));
+		}
 	}
 
 	onload(): void {
@@ -176,23 +202,33 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 
 		// Get all column IDs from grouped data
-		const allColumnIds = Array.from(groupedEntries.keys());
+		const dataColumnIds = Array.from(groupedEntries.keys());
+
+		// Get previously seen columns for this grouping
+		const seenColumns = this.seenColumnsMap.get(this.groupByPropertyId || 'default') || new Set();
+
+		// Merge data columns with seen columns to preserve empty columns
+		const allColumnIds = new Set([...dataColumnIds, ...seenColumns]);
+		const allColumnIdsArray = Array.from(allColumnIds);
+
+		// Track new columns for next save
+		this.seenColumnsMap.set(this.groupByPropertyId || 'default', allColumnIds);
 
 		// Initialize or get stored column order for this grouping
 		let columnOrder = this.columnOrderMap.get(this.groupByPropertyId || 'default') || [];
 
 		// Add any new columns not yet in order
 		let orderChanged = false;
-		for (const columnId of allColumnIds) {
+		for (const columnId of allColumnIdsArray) {
 			if (!columnOrder.includes(columnId)) {
 				columnOrder.push(columnId);
 				orderChanged = true;
 			}
 		}
 
-		// Remove columns that no longer exist
+		// Remove columns that have been explicitly deleted (not in seen list)
 		const initialLength = columnOrder.length;
-		columnOrder = columnOrder.filter((id) => allColumnIds.includes(id));
+		columnOrder = columnOrder.filter((id) => allColumnIds.has(id));
 		if (columnOrder.length !== initialLength) {
 			orderChanged = true;
 		}
@@ -207,14 +243,14 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		for (let i = 0; i < columnOrder.length; i++) {
 			const columnId = columnOrder[i];
 			const entries = groupedEntries.get(columnId) || [];
-			
+
 			// Render drop indicator before this column
 			this.renderColumnDropIndicator(boardEl, columnId, 'before');
-			
+
 			// Render the column
 			this.renderColumn(boardEl, columnId, entries);
 		}
-		
+
 		// Final drop indicator after last column
 		if (columnOrder.length > 0) {
 			this.renderColumnDropIndicator(boardEl, columnOrder[columnOrder.length - 1], 'after');
@@ -305,17 +341,17 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			cardsContainer.removeClass('kanban-cards-container--dragover');
 		});
 
-	cardsContainer.addEventListener('drop', async (e: DragEvent) => {
-		e.preventDefault();
-		cardsContainer.removeClass('kanban-cards-container--dragover');
+		cardsContainer.addEventListener('drop', async (e: DragEvent) => {
+			e.preventDefault();
+			cardsContainer.removeClass('kanban-cards-container--dragover');
 
-		// Extract target column ID from the DOM to ensure we get the correct target
-		const targetColumnId = cardsContainer.closest('.kanban-column')?.getAttribute('data-column-id');
-		
-		if (this.draggedEntry && this.draggedFromColumnId !== targetColumnId && targetColumnId) {
-			await this.updateEntryProperty(this.draggedEntry, targetColumnId);
-		}
-	});
+			// Extract target column ID from the DOM to ensure we get the correct target
+			const targetColumnId = cardsContainer.closest('.kanban-column')?.getAttribute('data-column-id');
+
+			if (this.draggedEntry && this.draggedFromColumnId !== targetColumnId && targetColumnId) {
+				await this.updateEntryProperty(this.draggedEntry, targetColumnId);
+			}
+		});
 
 		// Column reordering handlers
 		columnEl.addEventListener('dragover', (e: DragEvent) => {
@@ -392,7 +428,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 									el.setText(this.config!.getDisplayName(propertyId) + ': ');
 								});
 								const valueEl = propEl.createSpan('kanban-card-property-value');
-								
+
 								// Render value using the value's renderTo method if available
 								if (value && typeof value.renderTo === 'function') {
 									value.renderTo(valueEl, this.app.renderContext);
@@ -459,7 +495,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 						el.setText(this.config!.getDisplayName(propId) + ': ');
 					});
 					const valueEl = propEl.createSpan('kanban-card-property-value');
-					
+
 					// Render value using the value's renderTo method if available
 					if (value && typeof value.renderTo === 'function') {
 						value.renderTo(valueEl, this.app.renderContext);
@@ -556,14 +592,8 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 	}
 
-
-
-	private hasValidProperties(): boolean {
-		return this.allProperties && this.allProperties.length > 0 && !!this.config;
-	}
-
 	static getViewOptions(): ViewOption[] {
-		return [
+		const output: ViewOption[] = [
 			{
 				type: 'property',
 				displayName: 'Group by',
@@ -571,6 +601,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				default: 'status',
 				placeholder: 'Property'
 			}
-		] as ViewOption[];
+		];
+		return output;
 	}
 }
