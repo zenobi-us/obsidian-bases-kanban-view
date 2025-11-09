@@ -4,6 +4,7 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$PROJECT_DIR"
 
 echo "Watching for changes in src/"
 echo "Press Ctrl+C to stop"
@@ -19,7 +20,7 @@ while true; do
     if [ "$last_hash" != "$current_hash" ]; then
         echo "[$(date '+%H:%M:%S')] Changes detected, building..."
         
-        if npm run build > /dev/null 2>&1; then
+        if tsc -noEmit && node esbuild.config.mjs production > /dev/null 2>&1; then
             echo "[$(date '+%H:%M:%S')] ✅ Built successfully"
         else
             echo "[$(date '+%H:%M:%S')] ❌ Build failed"

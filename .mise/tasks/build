@@ -3,4 +3,9 @@
 
 set -euo pipefail
 
-npm run build
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+cd "$PROJECT_DIR"
+
+# Type check and build with esbuild
+tsc -noEmit
+node esbuild.config.mjs production
