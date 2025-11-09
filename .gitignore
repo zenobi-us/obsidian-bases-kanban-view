@@ -34,3 +34,6 @@ coverage
 # Obsidian
 .obsidian
 .vault
+
+# Git Worktrees
+*.worktrees/

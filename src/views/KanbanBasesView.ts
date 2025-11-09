@@ -203,11 +203,53 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			this.saveColumnOrder();
 		}
 
-		// Render columns in saved order
-		for (const columnId of columnOrder) {
+		// Render columns in saved order with drop indicators between them
+		for (let i = 0; i < columnOrder.length; i++) {
+			const columnId = columnOrder[i];
 			const entries = groupedEntries.get(columnId) || [];
+			
+			// Render drop indicator before this column
+			this.renderColumnDropIndicator(boardEl, columnId, 'before');
+			
+			// Render the column
 			this.renderColumn(boardEl, columnId, entries);
 		}
+		
+		// Final drop indicator after last column
+		if (columnOrder.length > 0) {
+			this.renderColumnDropIndicator(boardEl, columnOrder[columnOrder.length - 1], 'after');
+		}
+	}
+
+	private renderColumnDropIndicator(boardEl: HTMLElement, columnId: string, position: 'before' | 'after'): void {
+		const indicator = boardEl.createDiv('kanban-column-drop-indicator');
+		indicator.setAttribute('data-column-id', columnId);
+		indicator.setAttribute('data-position', position);
+
+		indicator.addEventListener('dragover', (e: DragEvent) => {
+			const dragData = e.dataTransfer?.getData('text/plain');
+			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
+				e.preventDefault();
+				if (e.dataTransfer) {
+					e.dataTransfer.dropEffect = 'move';
+				}
+				indicator.addClass('kanban-column-drop-indicator--active');
+			}
+		});
+
+		indicator.addEventListener('dragleave', () => {
+			indicator.removeClass('kanban-column-drop-indicator--active');
+		});
+
+		indicator.addEventListener('drop', (e: DragEvent) => {
+			e.preventDefault();
+			indicator.removeClass('kanban-column-drop-indicator--active');
+
+			const dragData = e.dataTransfer?.getData('text/plain');
+			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
+				this.reorderColumnsRelative(this.draggedColumnId, columnId, position);
+			}
+		});
 	}
 
 	private renderColumn(boardEl: HTMLElement, columnId: string, entries: BasesEntry[]): void {
@@ -336,9 +378,10 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 						this.draggedFromColumnId = null;
 					});
 
-					// Render properties
-					if (this.hasValidProperties()) {
-						for (const propertyId of this.allProperties!) {
+					// Render only visible properties (in user's configured order)
+					if (this.config) {
+						const visibleProperties = this.config.getOrder();
+						for (const propertyId of visibleProperties) {
 							const value = entry.getValue(propertyId);
 							if (value) {
 								const propEl = card.createDiv('kanban-card-property');
@@ -402,9 +445,10 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			this.draggedFromColumnId = null;
 		});
 
-		// Render all visible properties
-		if (this.hasValidProperties()) {
-			for (const propId of this.allProperties!) {
+		// Render only visible properties (in user's configured order)
+		if (this.config) {
+			const visibleProperties = this.config.getOrder();
+			for (const propId of visibleProperties) {
 				const value = entry.getValue(propId);
 				if (value) {
 					const propEl = card.createDiv('kanban-card-property');
@@ -438,6 +482,32 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		// Move source column to target position
 		const [moved] = order.splice(sourceIndex, 1);
 		order.splice(targetIndex, 0, moved);
+
+		// Save new order
+		this.columnOrderMap.set(this.groupByPropertyId, order);
+		this.saveColumnOrder();
+
+		// Re-render with new order
+		this.render();
+	}
+
+	private reorderColumnsRelative(sourceColumnId: string, targetColumnId: string, position: 'before' | 'after'): void {
+		if (!this.groupByPropertyId) return;
+
+		// Get current column order for this grouping
+		let order = this.columnOrderMap.get(this.groupByPropertyId) || [];
+
+		const sourceIndex = order.indexOf(sourceColumnId);
+		const targetIndex = order.indexOf(targetColumnId);
+
+		if (sourceIndex === -1 || targetIndex === -1) return;
+
+		// Remove source from current position
+		const [moved] = order.splice(sourceIndex, 1);
+
+		// Insert at target position
+		const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
+		order.splice(insertIndex, 0, moved);
 
 		// Save new order
 		this.columnOrderMap.set(this.groupByPropertyId, order);

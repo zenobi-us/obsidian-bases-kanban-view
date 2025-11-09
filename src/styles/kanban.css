@@ -9,11 +9,10 @@
 
 /* Board uses flex for horizontal scrolling of columns */
 .kanban-board {
-	background: orange;
 	display: flex;
 	flex-direction: row;
-	gap: 16px;
-	padding: 16px;
+	gap: var(--size-4-4);
+	padding: var(--size-4-4);
 	overflow-x: auto;
 	overflow-y: hidden;
 	flex: 1;
@@ -24,10 +23,10 @@
 .kanban-column {
 	display: grid;
 	grid-template-rows: auto 1fr;
-	gap: 12px;
+	gap: var(--size-4-3);
 	background: var(--background-secondary);
-	border-radius: 8px;
-	padding: 12px;
+	border-radius: var(--radius-m);
+	padding: var(--size-4-3);
 	height: 100%;
 	min-width: 300px;
 	max-width: 350px;
@@ -41,30 +40,32 @@
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	font-weight: bold;
+	font-weight: var(--font-semibold);
 	cursor: grab;
-	padding-bottom: 8px;
-	border-bottom: 1px solid var(--divider-color);
+	padding-bottom: var(--size-4-2);
+	border-bottom: var(--border-width) solid var(--divider-color);
 	flex-shrink: 0;
 }
 
 .kanban-column-title {
 	flex: 1;
-	font-size: 1em;
+	font-size: var(--font-ui-medium);
+	font-family: var(--font-interface-theme);
 }
 
 .kanban-column-count {
-	font-size: 0.85em;
+	font-size: var(--font-ui-small);
 	color: var(--text-muted);
-	margin-left: 8px;
+	margin-left: var(--size-4-2);
 	white-space: nowrap;
+	font-family: var(--font-interface-theme);
 }
 
 /* Cards container uses flex column for vertical stacking */
 .kanban-cards-container {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--size-4-2);
 	overflow-y: auto;
 	overflow-x: hidden;
 	min-height: 0;
@@ -72,31 +73,32 @@
 
 .kanban-card {
 	background: var(--background-primary);
-	border: 1px solid var(--divider-color);
-	border-radius: 6px;
-	padding: 12px;
+	border: var(--border-width) solid var(--divider-color);
+	border-radius: var(--radius-m);
+	padding: var(--size-4-3);
 	cursor: grab;
 	transition: box-shadow 0.2s ease, transform 0.2s ease;
 	flex-shrink: 0;
 }
 
 .kanban-card:hover {
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-	transform: translateY(-2px);
+	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.15);
+	transform: translateY(calc(var(--size-2-1) * -1));
 }
 
 /* Card properties use flex column for stacking */
 .kanban-card-property {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
-	margin-bottom: 8px;
-	font-size: 0.9em;
+	gap: var(--size-2-1);
+	margin-bottom: var(--size-4-2);
+	font-size: var(--font-ui-small);
+	font-family: var(--font-interface-theme);
 }
 
 .kanban-card-property-label {
 	color: var(--text-muted);
-	font-weight: 500;
+	font-weight: var(--font-semibold);
 }
 
 .kanban-card-property-value {
@@ -113,42 +115,62 @@
 	justify-content: center;
 	height: 100%;
 	color: var(--text-muted);
-	padding: 20px;
+	padding: var(--size-4-5);
 	text-align: center;
 }
 
 .kanban-error {
-	background: rgba(255, 0, 0, 0.02);
+	background: rgba(var(--color-red-rgb), 0.02);
 }
 
 .kanban-error-message,
 .kanban-empty-message {
-	font-size: 1em;
-	line-height: 1.5;
+	font-size: var(--font-ui-medium);
+	line-height: var(--line-height-normal);
 	max-width: 300px;
+	font-family: var(--font-interface-theme);
 }
 
 .kanban-error-message {
 	color: var(--text-error);
+	font-weight: var(--font-semibold);
 }
 
 /* Drag states */
 .kanban-card--dragging {
 	opacity: 0.5;
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.2);
 	transform: scale(1.02);
+	z-index: 9999;
+	position: relative;
 }
 
 .kanban-cards-container--dragover {
-	background: var(--background-accent);
-	border-radius: 4px;
+	background: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1);
+	border-radius: var(--radius-s);
 }
 
 .kanban-column-header--dragging {
 	opacity: 0.5;
-	background: var(--background-accent);
+	background: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1);
 }
 
 .kanban-column--drop-target {
-	border-left: 4px solid var(--text-accent);
+	border-left: var(--size-4-1) solid var(--text-accent);
+}
+
+/* Column drop indicator - appears between columns when dragging */
+.kanban-column-drop-indicator {
+	width: var(--size-4-2);
+	min-width: var(--size-4-2);
+	flex-shrink: 0;
+	transition: background-color 0.2s ease, width 0.2s ease;
+	opacity: 0.3;
+}
+
+.kanban-column-drop-indicator--active {
+	width: var(--size-4-3);
+	background-color: var(--text-accent);
+	opacity: 1;
+	border-radius: var(--radius-s);
 }
