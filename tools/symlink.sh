@@ -25,9 +25,11 @@ PLUGIN_DIR="$VAULT_PATH/.obsidian/plugins/obsidian-kanban-bases"
 # Create plugin directory if it doesn't exist
 mkdir -p "$PLUGIN_DIR"
 
-# Create symlinks (force overwrite if they exist)
+# Remove old symlink/dist if it exists
+rm -f "$PLUGIN_DIR/dist"
+
+# Symlink the dist directory (force overwrite if it exists)
 ln -sf "$PROJECT_DIR/dist" "$PLUGIN_DIR/dist"
-ln -sf "$PROJECT_DIR/dist/main.js" "$PLUGIN_DIR/main.js"
 
 # Copy manifest.json (non-symlinked, as it shouldn't change)
 cp "$PROJECT_DIR/manifest.json" "$PLUGIN_DIR/"
