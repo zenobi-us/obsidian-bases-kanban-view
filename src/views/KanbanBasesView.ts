@@ -476,34 +476,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 	}
 
-	private validateGroupingProperty(): boolean {
-		if (!this.groupByPropertyId) {
-			console.warn('[KanbanBasesView] groupByPropertyId is not set');
-			return false;
-		}
 
-		if (!this.allProperties || this.allProperties.length === 0) {
-			console.warn('[KanbanBasesView] No properties available');
-			return false;
-		}
-
-		if (!this.config) {
-			console.warn('[KanbanBasesView] No config available');
-			return false;
-		}
-
-		// Check if grouping property is in the available properties
-		const hasGroupingProperty = this.allProperties.some(prop =>
-			this.config!.getDisplayName(prop).toLowerCase() === this.groupByPropertyId!.toLowerCase()
-		);
-
-		if (!hasGroupingProperty) {
-			console.warn('[KanbanBasesView] Grouping property not found in available properties:', this.groupByPropertyId);
-			return false;
-		}
-
-		return true;
-	}
 
 	private hasValidProperties(): boolean {
 		return this.allProperties && this.allProperties.length > 0 && !!this.config;

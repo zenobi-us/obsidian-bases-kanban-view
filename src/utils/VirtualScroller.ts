@@ -36,6 +36,7 @@ export class VirtualScroller<T> {
     this.container.style.height = '100%';
   }
 
+
   private attachScrollListener(): void {
     this.scrollHandler = () => this.render();
     this.container.addEventListener('scroll', this.scrollHandler);

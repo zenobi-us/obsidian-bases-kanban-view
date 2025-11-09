@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#MISE description="Watch src/ for changes (triggers rebuilds)"
+#MISE description="Watch src/ for changes with Vite (triggers rebuilds)"
 
 set -euo pipefail
 
@@ -7,22 +7,5 @@ echo "Watching for changes in src/"
 echo "Press Ctrl+C to stop"
 echo ""
 
-# Watch for changes with polling (no external dependency)
-last_hash=$(find src -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
-
-while true; do
-    sleep 2
-    current_hash=$(find src -type f \( -name "*.ts" -o -name "*.css" \) -exec md5sum {} + | md5sum)
-    
-    if [ "$last_hash" != "$current_hash" ]; then
-        echo "[$(date '+%H:%M:%S')] Changes detected, building..."
-        
-        if tsc -noEmit && node esbuild.config.mjs production > /dev/null 2>&1; then
-            echo "[$(date '+%H:%M:%S')] ✅ Built successfully"
-        else
-            echo "[$(date '+%H:%M:%S')] ❌ Build failed"
-        fi
-        
-        last_hash=$current_hash
-    fi
-done
+# Use Vite's native watch mode
+vite build --watch

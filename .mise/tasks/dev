@@ -1,1 +1,20 @@
-undefined
+#!/usr/bin/env bash
+#MISE description="Start full dev workflow (setup, vault, symlink, build & watch)"
+#MISE depends=["setup", "setup-vault", "symlink"]
+
+set -euo pipefail
+
+echo "Starting development workflow..."
+echo "Running build and watch with Vite"
+echo ""
+
+# Run build watch and symlink watch in parallel
+mise run build &
+PID_BUILD=$!
+
+sleep 2
+mise run watch &
+PID_WATCH=$!
+
+# Wait for both to finish (they run until Ctrl+C)
+wait $PID_BUILD $PID_WATCH 2>/dev/null || true

@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-#MISE description="Watch dist/ and reload plugin in Obsidian"
-
-set -euo pipefail
-
-node tools/hmr.js

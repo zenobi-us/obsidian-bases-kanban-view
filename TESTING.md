@@ -131,15 +131,15 @@ npm run dev
 
 This watches `src/**` for changes and rebuilds automatically.
 
-### Manual Install After Build
+### Development Workflow
 
-After making changes and rebuilding:
+Use `make dev` for testing:
 
 ```bash
-bash tools/install-plugin.sh
+make dev
 ```
 
-Then reload Obsidian (Cmd+R / Ctrl+R) to test.
+This watches for changes and auto-installs. Then reload Obsidian (Cmd+R / Ctrl+R) to test.
 
 ### Checking DevTools Console
 
@@ -175,12 +175,11 @@ app.plugins.plugins['obsidian-kanban-bases']
 // Filter: "[KanbanBasesView]"
 ```
 
-### Rebuild Plugin
+### Rebuild and Test
 ```bash
 cd /mnt/Store/Projects/Experiements/ObsidianCustomPropertyUi
-npm run build
-bash tools/install-plugin.sh
-# Then reload Obsidian
+make dev
+# Then reload Obsidian (Cmd+R or Ctrl+R)
 ```
 
 ## Reporting Issues

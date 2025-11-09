@@ -3,6 +3,14 @@ node = "18"
 pnpm = "latest"
 shellcheck = "latest"
 "ubi:dimo414/bkt" = "0.8.2"
+watchexec = "latest"
 
 [env]
-PATH = "./node_modules/.bin:${PATH}"
+_.path = [
+    # adds an absolute path
+    "~/.local/share/bin",
+    # adds a path relative to the project root (config_root)
+    "{{config_root}}/node_modules/.bin",
+    # adds a relative path (equivalent to "{{config_root}}/tools/bin")
+    "tools/bin",
+]
