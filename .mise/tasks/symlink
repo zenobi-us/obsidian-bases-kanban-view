@@ -19,4 +19,17 @@ if [ ! -d "$VAULT_PATH/.obsidian" ]; then
     exit 1
 fi
 
-undefined
+PLUGINS_DIR="$VAULT_PATH/.obsidian/plugins"
+PLUGIN_LINK="$PLUGINS_DIR/KanbanBasesView"
+PROJECT_ROOT="$(pwd)"
+
+# Create plugins directory if it doesn't exist
+mkdir -p "$PLUGINS_DIR"
+
+# Remove old symlink if it exists
+rm -f "$PLUGIN_LINK"
+
+# Symlink dist folder to vault plugins as KanbanBasesView
+ln -sf "$PROJECT_ROOT/dist" "$PLUGIN_LINK"
+
+echo "✅ Symlinked dist/ to: $PLUGIN_LINK"
