@@ -4,20 +4,9 @@
 
 set -euo pipefail
 
-echo "🔧 Kanban Bases View - Development Mode"
-echo ""
-
-# Build once
-echo "Initial build..."
+# Initial build and symlink
 mise run build
-
-# Symlink to vault
 bash tools/symlink.sh
 
-echo ""
-echo "Setup complete. Starting watch mode..."
-echo ""
-
-# Watch for changes with esbuild
-tsc -noEmit
-node esbuild.config.mjs --watch
+# Watch for changes
+mise watch build
