@@ -5,8 +5,6 @@
 	height: 100%;
 	width: 100%;
 	overflow: hidden;
-	background: rgba(255, 0, 0, 0.05);
-	padding: 8px;
 }
 
 /* Board uses flex for horizontal scrolling of columns */
@@ -19,7 +17,6 @@
 	overflow-y: hidden;
 	flex: 1;
 	align-items: start;
-	background: rgba(0, 255, 0, 0.05);
 }
 
 /* Column uses grid for header + cards layout */
@@ -27,7 +24,7 @@
 	display: grid;
 	grid-template-rows: auto 1fr;
 	gap: 12px;
-	background: rgba(0, 0, 255, 0.05);
+	background: var(--background-secondary);
 	border-radius: 8px;
 	padding: 12px;
 	height: 100%;
@@ -35,7 +32,6 @@
 	max-width: 350px;
 	flex-shrink: 0;
 	overflow: hidden;
-	border: 2px solid rgba(0, 0, 255, 0.3);
 }
 
 /* Column header uses flexbox for title + count */
@@ -46,12 +42,9 @@
 	align-items: center;
 	font-weight: bold;
 	cursor: grab;
-	padding: 8px;
 	padding-bottom: 8px;
 	border-bottom: 1px solid var(--divider-color);
 	flex-shrink: 0;
-	background: rgba(255, 255, 0, 0.1);
-	border-radius: 4px;
 }
 
 .kanban-column-title {
@@ -74,13 +67,11 @@
 	overflow-y: auto;
 	overflow-x: hidden;
 	min-height: 0;
-	padding: 4px;
-	background: rgba(255, 0, 255, 0.03);
 }
 
 .kanban-card {
-	background: rgba(255, 100, 0, 0.08);
-	border: 2px solid rgba(255, 100, 0, 0.3);
+	background: var(--background-primary);
+	border: 1px solid var(--divider-color);
 	border-radius: 6px;
 	padding: 12px;
 	cursor: grab;
@@ -100,9 +91,6 @@
 	gap: 2px;
 	margin-bottom: 8px;
 	font-size: 0.9em;
-	padding: 4px;
-	background: rgba(0, 255, 255, 0.1);
-	border-radius: 3px;
 }
 
 .kanban-card-property-label {
