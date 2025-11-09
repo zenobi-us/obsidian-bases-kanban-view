@@ -3,4 +3,8 @@
 
 set -euo pipefail
 
-bkt --ttl=24h --modtime=pnpm-lock.yaml -- pnpm install
+if command -v bkt &> /dev/null; then
+  bkt --ttl=24h --modtime=pnpm-lock.yaml -- pnpm install
+else
+  pnpm install
+fi
