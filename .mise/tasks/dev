@@ -1,11 +1,8 @@
 #!/usr/bin/env bash
 #MISE description="Watch and rebuild on changes (full dev workflow)"
-#MISE depends=["setup-vault"]
+#MISE depends=["setup-vault", "symlink"]
 
 set -euo pipefail
-
-# Symlink to vault
-bash tools/symlink.sh
 
 # Watch for changes (builds on first run and then on file changes)
 mise watch build
