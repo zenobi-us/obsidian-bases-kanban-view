@@ -509,8 +509,8 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		return this.allProperties && this.allProperties.length > 0 && !!this.config;
 	}
 
-	static getViewOptions(): (() => ViewOption[]) {
-		return () => [
+	static getViewOptions(): ViewOption[] {
+		return [
 			{
 				type: 'property',
 				displayName: 'Group by',
