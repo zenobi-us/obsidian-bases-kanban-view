@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Install dependencies with pnpm"
+
+set -euo pipefail
+
+pnpm install

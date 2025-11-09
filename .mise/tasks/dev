@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Watch and rebuild on changes (full dev workflow)"
-#MISE depends=["setup-vault", "symlink"]
+#MISE depends=["setup", "setup-vault", "symlink"]
 
 set -euo pipefail
 
