@@ -136,7 +136,7 @@ This watches `src/**` for changes and rebuilds automatically.
 After making changes and rebuilding:
 
 ```bash
-bash install-plugin.sh
+bash tools/install-plugin.sh
 ```
 
 Then reload Obsidian (Cmd+R / Ctrl+R) to test.
@@ -179,7 +179,7 @@ app.plugins.plugins['obsidian-kanban-bases']
 ```bash
 cd /mnt/Store/Projects/Experiements/ObsidianCustomPropertyUi
 npm run build
-bash install-plugin.sh
+bash tools/install-plugin.sh
 # Then reload Obsidian
 ```
 

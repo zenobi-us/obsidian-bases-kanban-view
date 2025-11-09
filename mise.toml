@@ -1,0 +1,22 @@
+[tools]
+shellcheck = "latest"
+
+[tasks.setup-vault]
+description = "Configure Obsidian vault path (run once)"
+run = "bash tools/dev.sh"
+
+[tasks.symlink]
+description = "Symlink plugin to Obsidian vault"
+run = "bash tools/symlink.sh"
+
+[tasks.build]
+description = "Build the plugin (TypeScript + esbuild)"
+run = "npm run build"
+
+[tasks.watch]
+description = "Watch src/ for changes (triggers rebuilds)"
+run = "bash tools/watch.sh"
+
+[tasks.dev]
+description = "Watch and rebuild on changes (full dev workflow)"
+run = "bash -c 'bash tools/dev.sh && npm run build && bash tools/symlink.sh && bash tools/watch.sh'"
