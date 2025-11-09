@@ -12,6 +12,8 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	public hoverPopover: HoverPopover | null = null;
 	private groupByPropertyId: BasesPropertyId = 'status' as BasesPropertyId;
 	private containerEl: HTMLElement;
+	private draggedEntry: BasesEntry | null = null;
+	private draggedFromColumnId: string | null = null;
 
 	readonly type = 'kanban';
 
@@ -104,6 +106,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 	private renderColumn(boardEl: HTMLElement, columnId: string, entries: BasesEntry[]): void {
 		const columnEl = boardEl.createDiv('kanban-column');
+		columnEl.setAttribute('data-column-id', columnId);
 
 		// Render column header
 		const headerEl = columnEl.createDiv('kanban-column-header');
@@ -117,20 +120,61 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		// Render cards container
 		const cardsContainer = columnEl.createDiv('kanban-cards-container');
 
+		cardsContainer.addEventListener('dragover', (e: DragEvent) => {
+			e.preventDefault();
+			if (e.dataTransfer) {
+				e.dataTransfer.dropEffect = 'move';
+			}
+			cardsContainer.addClass('kanban-cards-container--dragover');
+		});
+
+		cardsContainer.addEventListener('dragleave', () => {
+			cardsContainer.removeClass('kanban-cards-container--dragover');
+		});
+
+		cardsContainer.addEventListener('drop', async (e: DragEvent) => {
+			e.preventDefault();
+			cardsContainer.removeClass('kanban-cards-container--dragover');
+
+			if (this.draggedEntry && this.draggedFromColumnId !== columnId) {
+				await this.updateEntryProperty(this.draggedEntry, columnId);
+			}
+		});
+
 		for (const entry of entries) {
 			this.renderCard(cardsContainer, entry);
 		}
 	}
 
 	private renderCard(container: HTMLElement, entry: BasesEntry): void {
-		const cardEl = container.createDiv('kanban-card');
+		const card = container.createDiv({ cls: 'kanban-card' });
+		card.draggable = true;
+		card.setAttribute('data-entry-path', entry.file.path);
 
-		// Iterate through all visible properties and render them
+		// dragstart handler
+		card.addEventListener('dragstart', (e: DragEvent) => {
+			this.draggedEntry = entry;
+			this.draggedFromColumnId = (e.target as HTMLElement).closest('.kanban-column')?.getAttribute('data-column-id') || null;
+			card.addClass('kanban-card--dragging');
+			if (e.dataTransfer) {
+				e.dataTransfer.effectAllowed = 'move';
+				e.dataTransfer.setData('text/plain', entry.file.path);
+			}
+		});
+
+		// dragend handler
+		card.addEventListener('dragend', () => {
+			card.removeClass('kanban-card--dragging');
+			this.draggedEntry = null;
+			this.draggedFromColumnId = null;
+		});
+
+		// Render all visible properties (keep existing code)
 		if (this.config && this.allProperties) {
 			for (const propId of this.allProperties) {
 				const value = entry.getValue(propId);
 				if (value) {
-					const propEl = cardEl.createDiv('kanban-card-property');
+					const propEl = card.createDiv('kanban-card-property');
 					propEl.createSpan('kanban-card-property-label', (el) => {
 						el.setText(this.config.getDisplayName(propId) + ': ');
 					});
@@ -144,6 +188,25 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 					}
 				}
 			}
+		}
+	}
+
+	private async updateEntryProperty(entry: BasesEntry, newColumnValue: string): Promise<void> {
+		try {
+			if (!this.groupByPropertyId || !this.data) return;
+
+			// TODO: Implement actual property update using Obsidian/Bases API
+			// For now, log the update and re-render
+			console.log('Update entry property:', {
+				entryPath: entry.file.path,
+				propertyId: this.groupByPropertyId,
+				newValue: newColumnValue,
+			});
+
+			// Re-render to see if data updates
+			this.render();
+		} catch (error) {
+			console.error('Error updating entry property:', error);
 		}
 	}
 

@@ -104,3 +104,14 @@
 	font-size: 1.1em;
 	padding: 20px;
 }
+
+.kanban-card--dragging {
+	opacity: 0.5;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+	transform: scale(1.02);
+}
+
+.kanban-cards-container--dragover {
+	background: var(--background-accent);
+	border-radius: 4px;
+}
