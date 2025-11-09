@@ -19,8 +19,7 @@ if [ ! -d "$VAULT_PATH/.obsidian" ]; then
     exit 1
 fi
 
-PLUGINS_DIR="$VAULT_PATH/.obsidian/plugins"
-PLUGIN_LINK="$PLUGINS_DIR/KanbanBasesView"
+undefined
 PROJECT_ROOT="$(pwd)"
 
 # Create plugins directory if it doesn't exist
