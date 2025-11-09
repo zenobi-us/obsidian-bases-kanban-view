@@ -9,7 +9,7 @@
 
 /* Board uses flex for horizontal scrolling of columns */
 .kanban-board {
-	background: red;
+	background: orange;
 	display: flex;
 	flex-direction: row;
 	gap: 16px;

@@ -1,13 +1,23 @@
 #!/usr/bin/env bash
 #MISE description="Start dev server with Vite (watch + HMR)"
-#MISE depends=["setup", "setup-vault", "symlink"]
+#MISE depends=["setup", "setup-vault"]
 
 set -euo pipefail
 
-# Read vault path
+# Read vault path and plugin ID
 VAULT_PATH=$(cat .notes/VAULT_PATH)
 PLUGIN_ID=$(grep '"id"' manifest.json | head -1 | sed 's/.*"id": "\([^"]*\)".*/\1/')
-HOTRELOAD_PATH="$VAULT_PATH/.obsidian/plugins/$PLUGIN_ID/.hotreload"
+PLUGIN_PATH="$VAULT_PATH/.obsidian/plugins/$PLUGIN_ID"
+HOTRELOAD_PATH="$PLUGIN_PATH/.hotreload"
+
+# Clean up old symlink if it exists
+OLD_SYMLINK="$VAULT_PATH/.obsidian/plugins/kanban-bases-view"
+rm -f "$OLD_SYMLINK" 2>/dev/null || true
+
+echo "🚀 Starting Vite dev server..."
+echo "   Output: $PLUGIN_PATH"
+echo "   Plugin ID: $PLUGIN_ID"
+echo ""
 
 # Run Vite in dev mode with watch and trigger .hotreload on changes
 vite build --watch --mode development 2>&1 | while IFS= read -r line; do
