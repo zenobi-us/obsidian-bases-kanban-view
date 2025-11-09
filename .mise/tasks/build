@@ -5,4 +5,4 @@ set -euo pipefail
 
 # Type check and build with esbuild
 tsc -noEmit
-node esbuild.config.mjs production
+node esbuild.config.mjs
