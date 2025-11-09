@@ -16,7 +16,7 @@ export default class KanbanBasesViewPlugin extends Plugin {
 			name: 'Kanban',
 			icon: 'layout-grid',
 			factory: (controller, containerEl) => new KanbanBasesView(controller, containerEl),
-			options: KanbanBasesView.getViewOptions
+			options: () => KanbanBasesView.getViewOptions()
 		});
 
 		console.log('KanbanBasesViewPlugin loaded');
