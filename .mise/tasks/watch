@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mise description: Watch src/ for changes (triggers rebuilds)
+#MISE description="Watch src/ for changes (triggers rebuilds)"
 
 set -euo pipefail
 

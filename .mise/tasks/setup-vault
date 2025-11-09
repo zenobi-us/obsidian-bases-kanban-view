@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mise description: Configure Obsidian vault path (run once)
+#MISE description="Configure Obsidian vault path (run once)"
 
 set -euo pipefail
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mise description: Symlink plugin to Obsidian vault
+#MISE description="Symlink plugin to Obsidian vault"
 
 set -euo pipefail
 
