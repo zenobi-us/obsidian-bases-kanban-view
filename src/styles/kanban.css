@@ -115,3 +115,12 @@
 	background: var(--background-accent);
 	border-radius: 4px;
 }
+
+.kanban-column-header--dragging {
+	opacity: 0.5;
+	background: var(--background-accent);
+}
+
+.kanban-column--drop-target {
+	border-left: 4px solid var(--text-accent);
+}
