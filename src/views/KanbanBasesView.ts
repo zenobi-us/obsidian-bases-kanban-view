@@ -7,6 +7,7 @@ import {
 	HoverParent,
 	HoverPopover,
 } from 'obsidian';
+import { VirtualScroller } from '../utils/VirtualScroller';
 
 export class KanbanBasesView extends BasesView implements HoverParent {
 	public hoverPopover: HoverPopover | null = null;
@@ -16,6 +17,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private draggedFromColumnId: string | null = null;
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
+	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
 	readonly type = 'kanban';
 
@@ -48,6 +50,13 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	onunload(): void {
+		// Destroy all virtual scrollers
+		for (const scroller of this.virtualScrollers.values()) {
+			scroller.destroy();
+		}
+		this.virtualScrollers.clear();
+
+		// Clean up hover popover
 		if (this.hoverPopover) {
 			this.hoverPopover.unload();
 			this.hoverPopover = null;
@@ -240,8 +249,76 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			}
 		});
 
-		for (const entry of entries) {
-			this.renderCard(cardsContainer, entry);
+		// Virtual scrolling for large columns
+		const VIRTUAL_SCROLL_THRESHOLD = 30;
+
+		if (entries.length >= VIRTUAL_SCROLL_THRESHOLD) {
+			// Clean up old scroller if exists
+			if (this.virtualScrollers.has(columnId)) {
+				this.virtualScrollers.get(columnId)?.destroy();
+			}
+
+			// Create virtual scroller
+			const scroller = new VirtualScroller<BasesEntry>({
+				container: cardsContainer,
+				items: entries,
+				itemHeight: 150, // Estimate for card height
+				overscan: 3,
+				renderItem: (entry: BasesEntry) => {
+					const card = document.createElement('div');
+					card.className = 'kanban-card';
+					card.draggable = true;
+					card.setAttribute('data-entry-path', entry.file.path);
+
+					// Add drag handlers
+					card.addEventListener('dragstart', (e: DragEvent) => {
+						this.draggedEntry = entry;
+						this.draggedFromColumnId = columnId;
+						card.classList.add('kanban-card--dragging');
+						if (e.dataTransfer) {
+							e.dataTransfer.effectAllowed = 'move';
+							e.dataTransfer.setData('text/plain', entry.file.path);
+						}
+					});
+
+					card.addEventListener('dragend', () => {
+						card.classList.remove('kanban-card--dragging');
+						this.draggedEntry = null;
+						this.draggedFromColumnId = null;
+					});
+
+					// Render properties
+					if (this.config && this.allProperties) {
+						for (const propertyId of this.allProperties) {
+							const value = entry.getValue(propertyId);
+							if (value) {
+								const propEl = card.createDiv('kanban-card-property');
+								propEl.createSpan('kanban-card-property-label', (el) => {
+									el.setText(this.config.getDisplayName(propertyId) + ': ');
+								});
+								const valueEl = propEl.createSpan('kanban-card-property-value');
+								
+								// Render value using the value's renderTo method if available
+								if (value && typeof value.renderTo === 'function') {
+									value.renderTo(valueEl, this.app.renderContext);
+								} else {
+									valueEl.setText(String(value));
+								}
+							}
+						}
+					}
+
+					return card;
+				},
+				getItemKey: (entry: BasesEntry) => entry.file.path,
+			});
+
+			this.virtualScrollers.set(columnId, scroller);
+		} else {
+			// Normal rendering for smaller columns (use existing renderCard logic)
+			for (const entry of entries) {
+				this.renderCard(cardsContainer, entry);
+			}
 		}
 	}
 
