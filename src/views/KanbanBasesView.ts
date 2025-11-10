@@ -12,7 +12,6 @@ import { VirtualScroller } from '../utils/VirtualScroller';
 export class KanbanBasesView extends BasesView implements HoverParent {
 	public hoverPopover: HoverPopover | null = null;
 	private groupByPropertyId: BasesPropertyId = 'status' as BasesPropertyId;
-	private normalizeGroupingField: boolean = false;
 	private containerEl: HTMLElement;
 	private draggedEntry: BasesEntry | null = null;
 	private draggedFromColumnId: string | null = null;
@@ -173,16 +172,8 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		if (this.config) {
 			const configValue = this.config.get('groupByPropertyId');
 			this.groupByPropertyId = (configValue as BasesPropertyId) || ('status' as BasesPropertyId);
-			const normalizeValue = this.config.get('normalizeGroupingField');
-			this.normalizeGroupingField = normalizeValue === true || normalizeValue === 'true';
 		}
 		this.loadColumnOrder();
-	}
-
-
-	private normalizeGroupingValue(value: string): string {
-		// Normalize grouping values: trim whitespace and convert to lowercase
-		return String(value).trim().toLowerCase();
 	}
 
 	private groupEntries(): Map<string, BasesEntry[]> {
@@ -200,12 +191,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 		for (const entry of this.data.data) {
 			const value = entry.getValue(this.groupByPropertyId);
-			let columnKey = value ? String(value) : 'Ungrouped';
-			
-			// Apply normalization if enabled
-			if (columnKey !== 'Ungrouped' && this.normalizeGroupingField) {
-				columnKey = this.normalizeGroupingValue(columnKey);
-			}
+			const columnKey = value ? String(value) : 'Ungrouped';
 
 			if (!grouped.has(columnKey)) {
 				grouped.set(columnKey, []);
@@ -661,12 +647,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				key: 'groupByPropertyId',
 				default: 'status',
 				placeholder: 'Property'
-			},
-			{
-				type: 'toggle',
-				displayName: 'Normalize grouping field',
-				key: 'normalizeGroupingField',
-				default: false
 			}
 		];
 		return output;
