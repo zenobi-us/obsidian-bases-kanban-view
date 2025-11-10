@@ -18,6 +18,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private columnOrderMap: Map<string, string[]> = new Map();
 	private isDragging: boolean = false;
 	private queryController: QueryController;
+	private groupByFieldId: string | null = null;
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 	private cardRenderer: CardRenderer | null = null;
@@ -171,6 +172,12 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 
 		const boardEl = this.containerEl.createDiv('kanban-board');
+
+		// Extract grouping field ID from the groupedData structure
+		// The fieldId should be available on the groupedData property (from Obsidian API)
+		if ((this.data.groupedData as any).fieldId) {
+			this.groupByFieldId = (this.data.groupedData as any).fieldId;
+		}
 
 		// Convert groupedData to columnId -> entries format
 		const groupedEntries = new Map<string, BasesEntry[]>();
@@ -647,8 +654,11 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 	private async updateEntryProperty(entry: BasesEntry, newColumnValue: string): Promise<void> {
 		try {
-			if (!this.data) {
-				console.warn('[KanbanBasesView] Cannot update: missing data');
+			if (!this.groupByFieldId || !this.data) {
+				console.warn('[KanbanBasesView] Cannot update: missing groupByFieldId or data', {
+					hasFieldId: !!this.groupByFieldId,
+					hasData: !!this.data,
+				});
 				return;
 			}
 
@@ -657,19 +667,24 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				return;
 			}
 
-			console.log('[KanbanBasesView] Updating entry to new column:', {
+			console.log('[KanbanBasesView] Updating entry property:', {
 				entryPath: entry.file.path,
-				newColumn: newColumnValue,
+				fieldId: this.groupByFieldId,
+				newValue: newColumnValue,
 			});
 
-			// Note: Since grouping is now handled by Obsidian, we need to update the entry's
-			// grouping property. The actual property to update depends on what the user
-			// configured in Obsidian's groupBy settings. For now, this is a placeholder.
-			// In a real implementation, we'd need to know what property Obsidian is grouping by.
+			// Update the entry's property using the file manager's processFrontMatter
+			await this.app.fileManager.processFrontMatter(entry.file, (frontmatter: any) => {
+				frontmatter[this.groupByFieldId!] = newColumnValue;
+			});
 
-			console.log('[KanbanBasesView] Entry drag-drop update requires grouping property info from Obsidian API');
+			console.log('[KanbanBasesView] Successfully updated entry property:', {
+				entryPath: entry.file.path,
+				fieldId: this.groupByFieldId,
+				newValue: newColumnValue,
+			});
 
-			// Re-render to reflect any changes
+			// Re-render to reflect the updated data
 			this.render();
 		} catch (error) {
 			console.error('[KanbanBasesView] Error updating entry property:', error);
