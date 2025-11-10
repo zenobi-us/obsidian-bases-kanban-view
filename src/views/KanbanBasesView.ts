@@ -8,6 +8,7 @@ import {
 } from 'obsidian';
 import { VirtualScroller } from '../utils/VirtualScroller';
 import { CardRenderer } from '../utils/CardRenderer';
+import { ReactMountManager } from '../utils/reactMount';
 
 export class KanbanBasesView extends BasesView implements HoverParent {
 	public hoverPopover: HoverPopover | null = null;
@@ -22,6 +23,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 	private cardRenderer: CardRenderer | null = null;
+	private reactMountManager: ReactMountManager | null = null;
 
 	readonly type = 'kanban';
 
@@ -29,6 +31,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		super(controller);
 		this.queryController = controller;
 		this.containerEl = scrollEl.createDiv('kanban-bases-view-container');
+		this.reactMountManager = new ReactMountManager();
 	}
 
 	private loadColumnOrder(): void {
@@ -69,6 +72,12 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	onunload(): void {
+		// Unmount React component
+		if (this.reactMountManager) {
+			this.reactMountManager.unmount();
+			this.reactMountManager = null;
+		}
+
 		// Destroy all virtual scrollers
 		for (const scroller of this.virtualScrollers.values()) {
 			scroller.destroy();
@@ -109,19 +118,31 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			return;
 		}
 
-		// Initialize CardRenderer for tiered field rendering
 		try {
-			this.cardRenderer = new CardRenderer({
-				queryController: this.queryController,
-				queryResult: this.data,
-				allProperties: this.data.properties || [],
-			}, this.app);
-		} catch (error) {
-			console.warn('[KanbanBasesView] Failed to initialize CardRenderer:', error);
-			this.cardRenderer = null;
-		}
+			// Extract grouping field ID from the groupedData structure
+			if ((this.data.groupedData as any).fieldId) {
+				this.groupByFieldId = (this.data.groupedData as any).fieldId;
+			}
 
-		this.renderBoard();
+			// Mount React component to render kanban board
+			if (this.reactMountManager && this.groupByFieldId) {
+				this.reactMountManager.mount(
+					this.containerEl,
+					this.app,
+					this.queryController,
+					this.data,
+					this.groupByFieldId,
+					this.data.properties || []
+				);
+				console.debug('[KanbanBasesView] React component mounted successfully');
+			} else {
+				console.warn('[KanbanBasesView] Cannot mount React: missing manager or groupByFieldId');
+			}
+		} catch (error) {
+			console.error('[KanbanBasesView] Failed to render with React:', error);
+			// Fallback to vanilla rendering if React fails
+			this.renderBoard();
+		}
 	}
 
 	private loadConfig(): void {
