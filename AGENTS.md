@@ -4,6 +4,8 @@
 
 Check `mise tasks` before assuming the normal place.
 
+**CRITICAL: Always use `pnpm` for package management, not npm.** The project uses pnpm workspaces and npm will timeout.
+
 ## Vault Configuration
 
 On first run of `make dev`, you'll be prompted to enter your Obsidian vault path (directory containing `.obsidian/`). This path is stored in `.notes/VAULT_PATH` (gitignored) so it persists across sessions. To change the vault path, edit `.notes/VAULT_PATH` directly or delete it to be prompted again on next `make dev` run.

@@ -16,6 +16,7 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
+    "jsx": "react-jsx",
     "lib": [
       "DOM",
       "ES5",
@@ -23,9 +24,10 @@
       "ES7",
       "ES2019"
     ],
-    "types": ["vite/client"]
+    "types": ["vitest/globals", "vite/client"]
   },
   "include": [
-    "**/*.ts"
+    "**/*.ts",
+    "**/*.tsx"
   ]
 }
