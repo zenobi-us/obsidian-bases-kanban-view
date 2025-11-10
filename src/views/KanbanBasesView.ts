@@ -28,29 +28,16 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private loadColumnOrder(): void {
-		const key = `kanban-column-order`;
-		const stored = localStorage.getItem(key);
-		if (stored) {
-			try {
-				const data = JSON.parse(stored);
-				this.columnOrderMap = new Map(Object.entries(data));
-			} catch (e) {
-				console.warn('Failed to load column order:', e);
-			}
-		}
-
-		// Load seen columns from config (official Obsidian API)
+		// Load column order from config
 		if (this.config) {
-			const seenColumnsJson = this.config.get('kanban-seenColumns');
-			if (seenColumnsJson && typeof seenColumnsJson === 'string') {
+			const columnOrderJson = this.config.get('kanban-columnOrder');
+			if (columnOrderJson && typeof columnOrderJson === 'string') {
 				try {
-					const seenData = JSON.parse(seenColumnsJson);
-					this.seenColumnsMap = new Map(
-						Object.entries(seenData).map(([k, v]) => [k, new Set(v as string[])])
-					);
-					console.debug('[KanbanBasesView] Loaded seen columns:', Object.keys(seenData));
+					const data = JSON.parse(columnOrderJson);
+					this.columnOrderMap = new Map(Object.entries(data));
+					console.debug('[KanbanBasesView] Loaded column order');
 				} catch (e) {
-					console.warn('[KanbanBasesView] Failed to load seen columns:', e);
+					console.warn('[KanbanBasesView] Failed to load column order:', e);
 				}
 			}
 		}
@@ -71,17 +58,11 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private saveColumnOrder(): void {
-		const key = `kanban-column-order`;
-		const data = Object.fromEntries(this.columnOrderMap);
-		localStorage.setItem(key, JSON.stringify(data));
-
-		// Save seen columns to config (official Obsidian API)
-		const seenData = Object.fromEntries(
-			Array.from(this.seenColumnsMap.entries()).map(([k, v]) => [k, Array.from(v)])
-		);
+		// Save column order to config
 		if (this.config) {
-			this.config.set('kanban-seenColumns', JSON.stringify(seenData));
-			console.debug('[KanbanBasesView] Saved seen columns:', Object.keys(seenData));
+			const data = Object.fromEntries(this.columnOrderMap);
+			this.config.set('kanban-columnOrder', JSON.stringify(data));
+			console.debug('[KanbanBasesView] Saved column order');
 		}
 
 		// Save hidden columns to config
