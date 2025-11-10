@@ -15,7 +15,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private draggedFromColumnId: string | null = null;
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
-	private seenColumnsMap: Map<string, Set<string>> = new Map();
 	private hiddenColumns: Set<string> = new Set();
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
@@ -177,60 +176,27 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 
 		const boardEl = this.containerEl.createDiv('kanban-board');
-		const groupKey = this._getColumnIdKey();
 
 		// Convert groupedData to columnId -> entries format
 		const groupedEntries = new Map<string, BasesEntry[]>();
-		const allColumnIds: Set<string> = new Set();
 
 		for (const group of this.data.groupedData) {
 			// Use "Backlog" for undefined/null keys
 			const columnId = group.key === null || group.key === undefined ? 'Backlog' : String(group.key);
 			groupedEntries.set(columnId, group.entries);
-			allColumnIds.add(columnId);
 		}
 
-		if (groupedEntries.size === 0) {
+		// Get configured column order from columnOrderMap (set from kanban-columnNames)
+		const groupKey = this._getColumnIdKey();
+		let columnOrder = this.columnOrderMap.get(groupKey) || [];
+
+		// If no columns configured, show nothing (user hasn't set column names yet)
+		if (columnOrder.length === 0) {
 			this.renderEmptyState();
 			return;
 		}
 
-		// Get previously seen columns for this grouping
-		const seenColumns = this.seenColumnsMap.get(groupKey) || new Set();
-
-		// Merge data columns with seen columns to preserve empty columns
-		const mergedColumnIds = new Set([...allColumnIds, ...seenColumns]);
-		const mergedColumnIdsArray = Array.from(mergedColumnIds);
-
-		// Track new columns for next save
-		this.seenColumnsMap.set(groupKey, mergedColumnIds);
-
-		// Initialize or get stored column order for this grouping
-		let columnOrder = this.columnOrderMap.get(groupKey) || [];
-
-		// Add any new columns not yet in order
-		let orderChanged = false;
-		for (const columnId of mergedColumnIdsArray) {
-			if (!columnOrder.includes(columnId)) {
-				columnOrder.push(columnId);
-				orderChanged = true;
-			}
-		}
-
-		// Remove columns that have been explicitly deleted (not in seen list)
-		const initialLength = columnOrder.length;
-		columnOrder = columnOrder.filter((id) => mergedColumnIds.has(id));
-		if (columnOrder.length !== initialLength) {
-			orderChanged = true;
-		}
-
-		// Save if order changed
-		if (orderChanged) {
-			this.columnOrderMap.set(groupKey, columnOrder);
-			this.saveColumnOrder();
-		}
-
-		// Render columns in saved order with drop indicators between them
+		// Render columns in configured order (even if empty)
 		for (let i = 0; i < columnOrder.length; i++) {
 			const columnId = columnOrder[i];
 
