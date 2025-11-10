@@ -10,7 +10,7 @@ export interface KanbanViewProps {
   app: App;
   queryController: QueryController;
   queryResult: BasesQueryResult;
-  groupByPropertyId: string;
+  groupByPropertyId: string | null;
   allProperties: BasesPropertyId[];
 }
 

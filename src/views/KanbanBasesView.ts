@@ -120,8 +120,16 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 		try {
 			// Extract grouping field ID from the groupedData structure
+			// If not available from API, use first property as fallback (drag-drop support to be added later)
 			if ((this.data.groupedData as any).fieldId) {
 				this.groupByFieldId = (this.data.groupedData as any).fieldId;
+			} else if (this.data.properties && this.data.properties.length > 0) {
+				// Fallback: use first property ID for now
+				this.groupByFieldId = this.data.properties[0];
+				console.debug('[KanbanBasesView] Using first property as groupByFieldId:', this.groupByFieldId);
+			} else {
+				this.groupByFieldId = 'unknown';
+				console.warn('[KanbanBasesView] No properties available, using placeholder groupByFieldId');
 			}
 
 			// Mount React component to render kanban board
@@ -136,7 +144,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				);
 				console.debug('[KanbanBasesView] React component mounted successfully');
 			} else {
-				console.warn('[KanbanBasesView] Cannot mount React: missing manager or groupByFieldId');
+				console.warn('[KanbanBasesView] Cannot mount React: missing manager');
 			}
 		} catch (error) {
 			console.error('[KanbanBasesView] Failed to render with React:', error);

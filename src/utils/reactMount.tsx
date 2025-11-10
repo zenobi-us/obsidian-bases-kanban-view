@@ -10,14 +10,14 @@ export class ReactMountManager {
   private container: HTMLElement | null = null;
 
   /**
-   * Mount React component into DOM
-   */
+    * Mount React component into DOM
+    */
   public mount(
     container: HTMLElement,
     app: App,
     queryController: QueryController,
     queryResult: BasesQueryResult,
-    groupByPropertyId: string,
+    groupByPropertyId: string | null,
     allProperties: BasesPropertyId[]
   ): void {
     try {

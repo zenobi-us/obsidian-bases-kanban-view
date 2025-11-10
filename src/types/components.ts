@@ -13,7 +13,7 @@ export interface GroupedDataItem {
  */
 export interface KanbanBoardProps {
   queryResult: BasesQueryResult & { groupedData?: GroupedDataItem[] };
-  groupByPropertyId: string;
+  groupByPropertyId: string | null;
   allProperties: BasesPropertyId[];
 }
 
