@@ -5,7 +5,7 @@ import { App, BasesEntry, BasesPropertyId, BasesQueryResult, QueryController } f
  * This includes access to the data and controller.
  */
 export interface CardRendererConfig {
-	queryController: QueryController;
+	queryController?: QueryController;
 	queryResult: BasesQueryResult;
 	allProperties: BasesPropertyId[];
 }
@@ -35,9 +35,6 @@ export class CardRenderer {
 		if (!config) {
 			throw new Error('CardRenderer: config is required');
 		}
-		if (!config.queryController) {
-			throw new Error('CardRenderer: config.queryController is required');
-		}
 		if (!config.queryResult) {
 			throw new Error('CardRenderer: config.queryResult is required');
 		}
@@ -45,12 +42,12 @@ export class CardRenderer {
 			throw new Error('CardRenderer: app is required');
 		}
 
-		this.queryController = config.queryController;
+		this.queryController = config.queryController || ({} as QueryController);
 		this.queryResult = config.queryResult;
 		this.allProperties = config.allProperties || [];
 		this.app = app;
 
-		console.debug('[CardRenderer] Initialized with query controller and result');
+		console.debug('[CardRenderer] Initialized with query result');
 	}
 
 	/**

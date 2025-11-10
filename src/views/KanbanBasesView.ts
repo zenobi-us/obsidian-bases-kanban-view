@@ -7,6 +7,7 @@ import {
 	HoverPopover,
 } from 'obsidian';
 import { VirtualScroller } from '../utils/VirtualScroller';
+import { CardRenderer } from '../utils/CardRenderer';
 
 export class KanbanBasesView extends BasesView implements HoverParent {
 	public hoverPopover: HoverPopover | null = null;
@@ -16,13 +17,16 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
 	private isDragging: boolean = false;
+	private queryController: QueryController;
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
+	private cardRenderer: CardRenderer | null = null;
 
 	readonly type = 'kanban';
 
 	constructor(controller: QueryController, scrollEl: HTMLElement) {
 		super(controller);
+		this.queryController = controller;
 		this.containerEl = scrollEl.createDiv('kanban-bases-view-container');
 	}
 
@@ -102,6 +106,18 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		if (!this.data.groupedData || this.data.groupedData.length === 0) {
 			this.renderEmptyState();
 			return;
+		}
+
+		// Initialize CardRenderer for tiered field rendering
+		try {
+			this.cardRenderer = new CardRenderer({
+				queryController: this.queryController,
+				queryResult: this.data,
+				allProperties: this.data.properties || [],
+			}, this.app);
+		} catch (error) {
+			console.warn('[KanbanBasesView] Failed to initialize CardRenderer:', error);
+			this.cardRenderer = null;
 		}
 
 		this.renderBoard();
@@ -499,6 +515,33 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		this._handleCardClick(e);
 	});
 
+		// Render card content using CardRenderer for tiered field rendering
+		if (this.cardRenderer) {
+			try {
+				const renderedCard = this.cardRenderer.render(entry);
+				// Append the tiered card content to the card element
+				const childCount = renderedCard.children.length;
+				for (let i = 0; i < childCount; i++) {
+					const child = renderedCard.children[i];
+					if (child) {
+						card.appendChild(child);
+					}
+				}
+			} catch (error) {
+				console.warn('[KanbanBasesView] CardRenderer failed, falling back to basic rendering:', error);
+				this._renderCardFallback(card, entry);
+			}
+		} else {
+			// Fallback if CardRenderer not initialized
+			this._renderCardFallback(card, entry);
+		}
+	}
+
+	/**
+	 * Fallback card rendering when CardRenderer is not available.
+	 * Renders only visible properties in user's configured order.
+	 */
+	private _renderCardFallback(card: HTMLElement, entry: BasesEntry): void {
 		// Render only visible properties (in user's configured order)
 		if (this.config) {
 			const visibleProperties = this.config.getOrder();

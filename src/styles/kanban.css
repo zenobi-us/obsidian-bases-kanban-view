@@ -89,6 +89,75 @@
 	cursor: pointer;
 }
 
+/* Tier-based field rendering styles */
+.kanban-card-tier-1,
+.kanban-card-tier-2,
+.kanban-card-tier-3 {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-1);
+	margin-bottom: var(--size-4-2);
+}
+
+.kanban-card-tier-1 {
+	/* Tier 1: Critical Information - most prominent */
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-medium);
+	color: var(--text-normal);
+}
+
+.kanban-card-tier-2 {
+	/* Tier 2: Important Context - medium prominence */
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	opacity: 0.9;
+	border-top: var(--border-width) solid var(--divider-color);
+	padding-top: var(--size-2-1);
+}
+
+.kanban-card-tier-3 {
+	/* Tier 3: Additional Details - least prominent */
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	opacity: 0.7;
+}
+
+.kanban-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-1);
+}
+
+.kanban-field-label {
+	color: var(--text-muted);
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.kanban-field-value {
+	color: var(--text-normal);
+	word-break: break-word;
+}
+
+.kanban-card-tier-1 .kanban-field-label {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+}
+
+.kanban-card-tier-2 .kanban-field-label {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	opacity: 0.9;
+}
+
+.kanban-card-tier-3 .kanban-field-label {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	opacity: 0.7;
+}
+
 /* Card properties use flex column for stacking */
 .kanban-card-property {
 	display: flex;
