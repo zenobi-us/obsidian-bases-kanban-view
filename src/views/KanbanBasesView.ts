@@ -22,6 +22,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private groupingMode: 'property' | 'template' = 'property';
 	private groupingPropertyField: BasesPropertyId = 'status' as BasesPropertyId;
 	private groupingTemplate: string = '{{note.status}}';
+	private normalizePropertyValue: boolean = true;
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
@@ -81,9 +82,15 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		if (this.groupingMode === 'template') {
 			return this.renderTemplate(this.groupingTemplate, entry);
 		} else {
-			// property mode: get field value with kebab-case filter
+			// property mode: get field value, optionally normalize
 			const value = entry.getValue(this.groupingPropertyField);
-			return value ? this.kebabCase(String(value)) : 'Ungrouped';
+			if (!value) return 'Ungrouped';
+			
+			let columnKey = String(value);
+			if (this.normalizePropertyValue) {
+				columnKey = this.kebabCase(columnKey);
+			}
+			return columnKey;
 		}
 	}
 
@@ -261,6 +268,9 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			
 			const templateValue = this.config.get('groupingTemplate');
 			this.groupingTemplate = (templateValue as string) || '{{note.status|kebab-case}}';
+			
+			const normalizeValue = this.config.get('normalizePropertyValue');
+			this.normalizePropertyValue = normalizeValue !== false; // Default to true
 		}
 		this.loadColumnOrder();
 	}
@@ -749,6 +759,13 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 						key: 'groupingPropertyField',
 						default: 'status',
 						placeholder: 'Property',
+						shouldHide: (config: any) => config.get('groupingMode') !== 'property'
+					},
+					{
+						type: 'toggle',
+						displayName: 'Normalize property value',
+						key: 'normalizePropertyValue',
+						default: true,
 						shouldHide: (config: any) => config.get('groupingMode') !== 'property'
 					},
 					{
