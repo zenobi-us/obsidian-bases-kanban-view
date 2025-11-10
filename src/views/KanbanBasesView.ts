@@ -187,52 +187,9 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			const columnId = columnOrder[i];
 			const entries = groupedEntries.get(columnId) || [];
 
-			// Render drop indicator before this column
-			this.renderColumnDropIndicator(boardEl, columnId, 'before');
-
 			// Render the column
 			this.renderColumn(boardEl, columnId, entries);
 		}
-
-		// Final drop indicator after last column
-		if (columnOrder.length > 0) {
-			this.renderColumnDropIndicator(
-				boardEl,
-				columnOrder[columnOrder.length - 1],
-				'after'
-			);
-		}
-	}
-
-	private renderColumnDropIndicator(boardEl: HTMLElement, columnId: string, position: 'before' | 'after'): void {
-		const indicator = boardEl.createDiv('kanban-column-drop-indicator');
-		indicator.setAttribute('data-column-id', columnId);
-		indicator.setAttribute('data-position', position);
-
-		indicator.addEventListener('dragover', (e: DragEvent) => {
-			const dragData = e.dataTransfer?.getData('text/plain');
-			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
-				e.preventDefault();
-				if (e.dataTransfer) {
-					e.dataTransfer.dropEffect = 'move';
-				}
-				indicator.addClass('kanban-column-drop-indicator--active');
-			}
-		});
-
-		indicator.addEventListener('dragleave', () => {
-			indicator.removeClass('kanban-column-drop-indicator--active');
-		});
-
-		indicator.addEventListener('drop', (e: DragEvent) => {
-			e.preventDefault();
-			indicator.removeClass('kanban-column-drop-indicator--active');
-
-			const dragData = e.dataTransfer?.getData('text/plain');
-			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
-				this.reorderColumnsRelative(this.draggedColumnId, columnId, position);
-			}
-		});
 	}
 
 	private renderColumn(boardEl: HTMLElement, columnId: string, entries: BasesEntry[]): void {
@@ -309,21 +266,44 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				if (e.dataTransfer) {
 					e.dataTransfer.dropEffect = 'move';
 				}
-				columnEl.addClass('kanban-column--drop-target');
+				
+				// Detect which half of the column is being hovered
+				const rect = columnEl.getBoundingClientRect();
+				const midpoint = rect.left + rect.width / 2;
+				const isLeftHalf = e.clientX < midpoint;
+				
+				// Remove both classes first
+				columnEl.removeClass('kanban-column--drop-target-left');
+				columnEl.removeClass('kanban-column--drop-target-right');
+				
+				// Add appropriate class based on which half
+				if (isLeftHalf) {
+					columnEl.addClass('kanban-column--drop-target-left');
+				} else {
+					columnEl.addClass('kanban-column--drop-target-right');
+				}
 			}
 		});
 
 		columnEl.addEventListener('dragleave', () => {
-			columnEl.removeClass('kanban-column--drop-target');
+			columnEl.removeClass('kanban-column--drop-target-left');
+			columnEl.removeClass('kanban-column--drop-target-right');
 		});
 
 		columnEl.addEventListener('drop', async (e: DragEvent) => {
 			e.preventDefault();
-			columnEl.removeClass('kanban-column--drop-target');
+			columnEl.removeClass('kanban-column--drop-target-left');
+			columnEl.removeClass('kanban-column--drop-target-right');
 
 			const dragData = e.dataTransfer?.getData('text/plain');
 			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
-				this.reorderColumns(this.draggedColumnId, columnId);
+				// Detect which half to determine position
+				const rect = columnEl.getBoundingClientRect();
+				const midpoint = rect.left + rect.width / 2;
+				const isLeftHalf = e.clientX < midpoint;
+				const position = isLeftHalf ? 'before' : 'after';
+				
+				this.reorderColumnsRelative(this.draggedColumnId, columnId, position);
 			}
 		});
 

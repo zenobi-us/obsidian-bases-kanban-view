@@ -155,8 +155,12 @@
 	background: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1);
 }
 
-.kanban-column--drop-target {
+.kanban-column--drop-target-left {
 	border-left: var(--size-4-1) solid var(--text-accent);
+}
+
+.kanban-column--drop-target-right {
+	border-right: var(--size-4-1) solid var(--text-accent);
 }
 
 /* Column drop indicator - appears between columns when dragging */
