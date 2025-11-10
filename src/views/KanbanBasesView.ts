@@ -18,6 +18,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
 	private seenColumnsMap: Map<string, Set<string>> = new Map();
+	private lastDataSignature: string = '';
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
 	readonly type = 'kanban';
@@ -25,6 +26,49 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	constructor(controller: QueryController, scrollEl: HTMLElement) {
 		super(controller);
 		this.containerEl = scrollEl.createDiv('kanban-bases-view-container');
+	}
+
+	private getDataSignature(): string {
+		// Create a signature of current data to detect filter changes
+		if (!this.data || !this.data.data) {
+			return '';
+		}
+		// Use data length + sum of entry file paths for a simple but effective signature
+		return `size:${this.data.data.length}|hash:${this.data.data
+			.map((e) => e.file.path)
+			.join(',')}`;
+	}
+
+	private flushStaleColumns(): void {
+		// When data changes significantly (e.g., filter applied), remove persisted columns
+		// that no longer exist in the current dataset for any grouping property
+		const currentSignature = this.getDataSignature();
+
+		if (this.lastDataSignature && currentSignature !== this.lastDataSignature) {
+			console.debug('[KanbanBasesView] Data changed, flushing stale columns');
+
+			// For the current grouping property, get current columns from data
+			const groupedEntries = this.groupEntries();
+			const currentColumnIds = new Set(groupedEntries.keys());
+
+			// Remove persisted columns that no longer exist in data
+			const seenColumns = this.seenColumnsMap.get(this.groupByPropertyId || 'default');
+			if (seenColumns) {
+				const beforeFlush = seenColumns.size;
+				// Keep only columns that exist in current data
+				const flushedColumns = new Set([...seenColumns].filter((id) => currentColumnIds.has(id)));
+				this.seenColumnsMap.set(this.groupByPropertyId || 'default', flushedColumns);
+
+				if (flushedColumns.size !== beforeFlush) {
+					console.debug(
+						`[KanbanBasesView] Flushed stale columns: ${beforeFlush} -> ${flushedColumns.size}`
+					);
+					this.saveColumnOrder();
+				}
+			}
+		}
+
+		this.lastDataSignature = currentSignature;
 	}
 
 	private loadColumnOrder(): void {
@@ -192,6 +236,9 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			console.warn('[KanbanBasesView] renderBoard called but data is missing');
 			return;
 		}
+
+		// Flush stale columns when filter changes
+		this.flushStaleColumns();
 
 		const boardEl = this.containerEl.createDiv('kanban-board');
 		const groupedEntries = this.groupEntries();
