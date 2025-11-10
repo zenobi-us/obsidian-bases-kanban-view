@@ -49,7 +49,14 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		if (this.config) {
 			const data = Object.fromEntries(this.columnOrderMap);
 			this.config.set('kanban-columnOrder', JSON.stringify(data));
-			console.debug('[KanbanBasesView] Saved column order');
+			
+			// Also update kanban-columnNames with the new order
+			const groupKey = this._getColumnIdKey();
+			const columnOrder = this.columnOrderMap.get(groupKey) || [];
+			if (columnOrder.length > 0) {
+				this.config.set('kanban-columnNames', columnOrder.join(','));
+				console.debug('[KanbanBasesView] Saved column order and updated columnNames:', columnOrder.join(','));
+			}
 		}
 	}
 
