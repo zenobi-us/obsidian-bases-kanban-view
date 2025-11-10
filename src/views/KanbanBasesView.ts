@@ -15,7 +15,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private draggedFromColumnId: string | null = null;
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
-	private hiddenColumns: Set<string> = new Set();
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
@@ -43,20 +42,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				}
 			}
 		}
-
-		// Load hidden columns from config
-		if (this.config) {
-			const hiddenColumnsJson = this.config.get('kanban-hiddenColumns');
-			if (hiddenColumnsJson && typeof hiddenColumnsJson === 'string') {
-				try {
-					const hidden = JSON.parse(hiddenColumnsJson);
-					this.hiddenColumns = new Set(hidden as string[]);
-					console.debug('[KanbanBasesView] Loaded hidden columns:', Array.from(this.hiddenColumns));
-				} catch (e) {
-					console.warn('[KanbanBasesView] Failed to load hidden columns:', e);
-				}
-			}
-		}
 	}
 
 	private saveColumnOrder(): void {
@@ -65,12 +50,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			const data = Object.fromEntries(this.columnOrderMap);
 			this.config.set('kanban-columnOrder', JSON.stringify(data));
 			console.debug('[KanbanBasesView] Saved column order');
-		}
-
-		// Save hidden columns to config
-		if (this.config) {
-			this.config.set('kanban-hiddenColumns', JSON.stringify(Array.from(this.hiddenColumns)));
-			console.debug('[KanbanBasesView] Saved hidden columns:', Array.from(this.hiddenColumns));
 		}
 	}
 
@@ -199,12 +178,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		// Render columns in configured order (even if empty)
 		for (let i = 0; i < columnOrder.length; i++) {
 			const columnId = columnOrder[i];
-
-			// Skip hidden columns
-			if (this.hiddenColumns.has(columnId)) {
-				continue;
-			}
-
 			const entries = groupedEntries.get(columnId) || [];
 
 			// Render drop indicator before this column
@@ -215,11 +188,10 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 
 		// Final drop indicator after last column
-		const visibleColumns = columnOrder.filter((id) => !this.hiddenColumns.has(id));
-		if (visibleColumns.length > 0) {
+		if (columnOrder.length > 0) {
 			this.renderColumnDropIndicator(
 				boardEl,
-				visibleColumns[visibleColumns.length - 1],
+				columnOrder[columnOrder.length - 1],
 				'after'
 			);
 		}
@@ -293,16 +265,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 		headerEl.createDiv('kanban-column-count', (el) => {
 			el.setText(`${entries.length}`);
-		});
-
-		// Add remove button to hide column
-		headerEl.createDiv('kanban-column-remove', (el) => {
-			el.setText('×');
-			el.addEventListener('click', (e: MouseEvent) => {
-				e.preventDefault();
-				e.stopPropagation();
-				this.hideColumn(columnId);
-			});
 		});
 
 		// Render cards container
@@ -484,12 +446,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				}
 			}
 		}
-	}
-
-	private hideColumn(columnId: string): void {
-		this.hiddenColumns.add(columnId);
-		this.saveColumnOrder();
-		this.render();
 	}
 
 	private reorderColumns(sourceColumnId: string, targetColumnId: string): void {
