@@ -38,7 +38,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				if (names.length > 0) {
 					// Set as the default column order
 					this.columnOrderMap.set('default', names);
-					console.debug('[KanbanBasesView] Loaded column order from names:', names);
 				}
 			}
 		}
@@ -55,7 +54,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			const columnOrder = this.columnOrderMap.get(groupKey) || [];
 			if (columnOrder.length > 0) {
 				this.config.set('kanban-columnNames', columnOrder.join(','));
-				console.debug('[KanbanBasesView] Saved column order and updated columnNames:', columnOrder.join(','));
 			}
 		}
 	}
@@ -88,11 +86,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private render(): void {
-		console.debug('[KanbanBasesView] Rendering board using groupedData', {
-			hasData: !!this.data,
-			hasGroupedData: !!this.data?.groupedData,
-		});
-
 		if (!this.containerEl) {
 			console.warn('[KanbanBasesView] containerEl not initialized');
 			return;
@@ -116,7 +109,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private loadConfig(): void {
 		if (this.config) {
 			// Grouping config is no longer needed - it's handled by Obsidian's groupedData
-			console.debug('[KanbanBasesView] Config loaded (grouping controlled by Obsidian)');
 		}
 		this.loadColumnOrder();
 	}
@@ -205,49 +197,41 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		const columnEl = boardEl.createDiv('kanban-column');
 		columnEl.setAttribute('data-column-id', columnId);
 
-		// Column reordering handlers - need to be on columnEl to intercept column drag-drops
+		// Column dragover handler - shows visual feedback for column reordering
 		columnEl.addEventListener('dragover', (e: DragEvent) => {
-			const dragData = e.dataTransfer?.getData('text/plain');
-			// Check if this is a column drag (not a card drag)
-			if (dragData?.startsWith('column:')) {
+			// Use draggedColumnId to detect column drags (cannot read dataTransfer during drag due to browser security)
+			if (this.draggedColumnId && this.draggedColumnId !== columnId) {
 				e.preventDefault();
 				if (e.dataTransfer) {
 					e.dataTransfer.dropEffect = 'move';
 				}
 				
-				if (this.draggedColumnId && this.draggedColumnId !== columnId) {
-					// Detect which half of the column is being hovered
-					const rect = columnEl.getBoundingClientRect();
-					const midpoint = rect.left + rect.width / 2;
-					const isLeftHalf = e.clientX < midpoint;
-					
-					console.debug('[KanbanBasesView] Column dragover:', { isLeftHalf, clientX: e.clientX, midpoint, columnId });
-					
-					// Remove both classes first
-					columnEl.removeClass('kanban-column--drop-target-left');
-					columnEl.removeClass('kanban-column--drop-target-right');
-					
-					// Add appropriate class based on which half
-					if (isLeftHalf) {
-						columnEl.addClass('kanban-column--drop-target-left');
-					} else {
-						columnEl.addClass('kanban-column--drop-target-right');
-					}
+				// Detect which half of the column is being hovered
+				const rect = columnEl.getBoundingClientRect();
+				const midpoint = rect.left + rect.width / 2;
+				const isLeftHalf = e.clientX < midpoint;
+				
+				// Remove both classes first
+				columnEl.removeClass('kanban-column--drop-target-left');
+				columnEl.removeClass('kanban-column--drop-target-right');
+				
+				// Add appropriate class based on which half
+				if (isLeftHalf) {
+					columnEl.addClass('kanban-column--drop-target-left');
+				} else {
+					columnEl.addClass('kanban-column--drop-target-right');
 				}
 			}
 		});
 
-		columnEl.addEventListener('dragleave', (e: DragEvent) => {
+		columnEl.addEventListener('dragleave', () => {
 			// Only remove classes if we're leaving the column entirely (not to a child)
-			if (e.target === columnEl) {
-				columnEl.removeClass('kanban-column--drop-target-left');
-				columnEl.removeClass('kanban-column--drop-target-right');
-			}
+			columnEl.removeClass('kanban-column--drop-target-left');
+			columnEl.removeClass('kanban-column--drop-target-right');
 		});
 
 		columnEl.addEventListener('drop', async (e: DragEvent) => {
-			const dragData = e.dataTransfer?.getData('text/plain');
-			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
+			if (this.draggedColumnId && this.draggedColumnId !== columnId) {
 				e.preventDefault();
 				columnEl.removeClass('kanban-column--drop-target-left');
 				columnEl.removeClass('kanban-column--drop-target-right');
@@ -267,6 +251,36 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		headerEl.draggable = true;
 		headerEl.setAttribute('data-column-id', columnId);
 
+		// Setup mousemove tracking for visual feedback during drag
+		const handleMouseMove = (moveEvent: MouseEvent) => {
+			const elemAtPoint = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+			const targetColumn = elemAtPoint?.closest('[data-column-id]') as HTMLElement | null;
+			const targetColumnId = targetColumn?.getAttribute('data-column-id');
+
+			// Remove visual feedback from all columns
+			const boardEl = columnEl.closest('.kanban-board');
+			if (boardEl) {
+				const allColumns = boardEl.querySelectorAll('[data-column-id]');
+				allColumns.forEach((col) => {
+					col.classList.remove('kanban-column--drop-target-left');
+					col.classList.remove('kanban-column--drop-target-right');
+				});
+			}
+
+			// Add visual feedback to the target column
+			if (targetColumnId && targetColumnId !== columnId && targetColumn) {
+				const targetRect = targetColumn.getBoundingClientRect();
+				const midpoint = targetRect.left + targetRect.width / 2;
+				const isLeftHalf = moveEvent.clientX < midpoint;
+
+				if (isLeftHalf) {
+					targetColumn.classList.add('kanban-column--drop-target-left');
+				} else {
+					targetColumn.classList.add('kanban-column--drop-target-right');
+				}
+			}
+		};
+
 		headerEl.addEventListener('dragstart', (e: DragEvent) => {
 			this.draggedColumnId = columnId;
 			headerEl.addClass('kanban-column-header--dragging');
@@ -274,10 +288,45 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				e.dataTransfer.effectAllowed = 'move';
 				e.dataTransfer.setData('text/plain', `column:${columnId}`);
 			}
+
+			// Start tracking mousemove during drag
+			document.addEventListener('mousemove', handleMouseMove);
 		});
 
-		headerEl.addEventListener('dragend', () => {
+		headerEl.addEventListener('dragend', (e: DragEvent) => {
+			// Stop tracking mousemove
+			document.removeEventListener('mousemove', handleMouseMove);
+			
 			headerEl.removeClass('kanban-column-header--dragging');
+
+			// Clean up visual feedback from all columns
+			const boardEl = columnEl.closest('.kanban-board');
+			if (boardEl) {
+				const allColumns = boardEl.querySelectorAll('[data-column-id]');
+				allColumns.forEach((col) => {
+					col.classList.remove('kanban-column--drop-target-left');
+					col.classList.remove('kanban-column--drop-target-right');
+				});
+			}
+
+			// Handle column reordering
+			if (this.draggedColumnId && this.draggedColumnId !== columnId) {
+				const elemAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+				const targetColumn = elemAtPoint?.closest('[data-column-id]') as HTMLElement | null;
+				const targetColumnId = targetColumn?.getAttribute('data-column-id');
+
+				if (targetColumnId && targetColumnId !== this.draggedColumnId && targetColumn) {
+					// Calculate position based on where we released
+					const targetRect = targetColumn.getBoundingClientRect();
+					const midpoint = targetRect.left + targetRect.width / 2;
+					const isLeftHalf = e.clientX < midpoint;
+					const position = isLeftHalf ? 'before' : 'after';
+
+					this.reorderColumnsRelative(this.draggedColumnId, targetColumnId, position);
+				}
+			}
+
+			this.draggedColumnId = null;
 		});
 
 		headerEl.createDiv('kanban-column-title', (el) => {
@@ -292,14 +341,16 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		const cardsContainer = columnEl.createDiv('kanban-cards-container');
 
 		cardsContainer.addEventListener('dragover', (e: DragEvent) => {
-			const dragData = e.dataTransfer?.getData('text/plain');
-			// Only handle card drags here, not column drags
-			if (!dragData?.startsWith('column:')) {
+			// Handle both card and column drags
+			if (this.draggedEntry || this.draggedColumnId) {
 				e.preventDefault();
 				if (e.dataTransfer) {
 					e.dataTransfer.dropEffect = 'move';
 				}
-				cardsContainer.addClass('kanban-cards-container--dragover');
+				// Only show cards-container feedback for card drags
+				if (this.draggedEntry && !this.draggedColumnId) {
+					cardsContainer.addClass('kanban-cards-container--dragover');
+				}
 			}
 		});
 
@@ -308,9 +359,14 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		});
 
 		cardsContainer.addEventListener('drop', async (e: DragEvent) => {
-			const dragData = e.dataTransfer?.getData('text/plain');
-			// Only handle card drops here, not column drops
-			if (!dragData?.startsWith('column:')) {
+			// If this is a column drag, don't handle it here - let it bubble to columnEl
+			if (this.draggedColumnId) {
+				// Don't preventDefault, let it bubble
+				return;
+			}
+
+			// Handle card drops only
+			if (this.draggedEntry) {
 				e.preventDefault();
 				cardsContainer.removeClass('kanban-cards-container--dragover');
 
