@@ -1,10 +1,18 @@
 import { BasesEntry, BasesQueryResult, BasesPropertyId } from 'obsidian';
 
 /**
+ * Obsidian API GroupedData structure for representing grouped entries
+ */
+export interface GroupedDataItem {
+  key: string | null | undefined;
+  entries: BasesEntry[];
+}
+
+/**
  * Configuration for the Kanban Board component
  */
 export interface KanbanBoardProps {
-  queryResult: BasesQueryResult;
+  queryResult: BasesQueryResult & { groupedData?: GroupedDataItem[] };
   groupByPropertyId: string;
   allProperties: BasesPropertyId[];
 }
