@@ -28,16 +28,19 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private loadColumnOrder(): void {
-		// Load column order from config
+		// Load column name order from config (comma-separated list)
 		if (this.config) {
-			const columnOrderJson = this.config.get('kanban-columnOrder');
-			if (columnOrderJson && typeof columnOrderJson === 'string') {
-				try {
-					const data = JSON.parse(columnOrderJson);
-					this.columnOrderMap = new Map(Object.entries(data));
-					console.debug('[KanbanBasesView] Loaded column order');
-				} catch (e) {
-					console.warn('[KanbanBasesView] Failed to load column order:', e);
+			const columnNames = this.config.get('kanban-columnNames');
+			if (columnNames && typeof columnNames === 'string') {
+				// Parse comma-separated column names
+				const names = columnNames
+					.split(',')
+					.map((name) => name.trim())
+					.filter((name) => name.length > 0);
+				if (names.length > 0) {
+					// Set as the default column order
+					this.columnOrderMap.set('default', names);
+					console.debug('[KanbanBasesView] Loaded column order from names:', names);
 				}
 			}
 		}
@@ -604,8 +607,15 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	static getViewOptions(): ViewOption[] {
-		// Grouping is now controlled by Obsidian's built-in API, not via view options
-		const output: ViewOption[] = [];
+		const output: ViewOption[] = [
+			{
+				type: 'text',
+				displayName: 'Column order',
+				key: 'kanban-columnNames',
+				default: 'Backlog,Todo,In Progress,In Review,Done',
+				placeholder: 'e.g., Backlog,Todo,In Progress,In Review,Done',
+			},
+		];
 		return output;
 	}
 }
