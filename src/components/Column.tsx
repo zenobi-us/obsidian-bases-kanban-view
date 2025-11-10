@@ -49,6 +49,7 @@ export const Column = ({
     try {
       const cardId = e.dataTransfer.getData('cardId');
       if (cardId) {
+        console.debug('[Column] Card dropped', { cardId, targetColumnId: group.id });
         await onCardDrop(cardId, group.id);
       }
     } catch (error) {

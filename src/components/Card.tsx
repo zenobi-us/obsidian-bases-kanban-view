@@ -32,11 +32,23 @@ export const Card = ({
   onCardDrop
 }: CardProps): React.ReactElement => {
   /**
-   * Handle drag start event
+   * Handle drag start event - set card path as drag data
    */
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('cardId', entry.file.path);
+    
+    // Add visual feedback
+    (e.currentTarget as HTMLDivElement).classList.add('kanban-card--dragging');
+    console.debug('[Card] Drag started', { cardId: entry.file.path });
+  };
+
+  /**
+   * Handle drag end event - remove visual feedback
+   */
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>): void => {
+    (e.currentTarget as HTMLDivElement).classList.remove('kanban-card--dragging');
+    console.debug('[Card] Drag ended', { cardId: entry.file.path });
   };
 
   /**
@@ -74,6 +86,7 @@ export const Card = ({
       className="kanban-card"
       draggable
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       data-entry-path={entry.file.path}
     >
       <div className="kanban-card-content">
