@@ -3,6 +3,7 @@ import { resolve } from 'path';
 import builtInModules from 'builtin-modules';
 import fs from 'fs';
 import path from 'path';
+import react from '@vitejs/plugin-react';
 import manifest from './manifest.json' assert { type: 'json' };
 
 const banner = `/*
@@ -93,6 +94,6 @@ export default defineConfig(({ mode }) => {
         ],
       },
     },
-    plugins: [hotReloadPlugin, copyManifestPlugin],
+    plugins: [react(), hotReloadPlugin, copyManifestPlugin],
   };
 });
