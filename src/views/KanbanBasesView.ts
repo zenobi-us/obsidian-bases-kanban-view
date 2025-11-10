@@ -730,30 +730,36 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	static getViewOptions(): ViewOption[] {
 		const output: ViewOption[] = [
 			{
-				type: 'dropdown',
-				displayName: 'Grouping mode',
-				key: 'groupingMode',
-				default: 'property',
-				options: {
-					'property': 'Property',
-					'template': 'Template'
-				}
-			},
-			{
-				type: 'property',
-				displayName: 'Group by property',
-				key: 'groupingPropertyField',
-				default: 'status',
-				placeholder: 'Property',
-				shouldHide: (config: any) => config.get('groupingMode') !== 'property'
-			},
-			{
-				type: 'text',
-				displayName: 'Grouping template',
-				key: 'groupingTemplate',
-				default: '{{note.status|kebab-case}}',
-				placeholder: '{{note.status|kebab-case}}',
-				shouldHide: (config: any) => config.get('groupingMode') !== 'template'
+				type: 'group',
+				displayName: 'Grouping',
+				items: [
+					{
+						type: 'dropdown',
+						displayName: 'Mode',
+						key: 'groupingMode',
+						default: 'property',
+						options: {
+							'property': 'Property',
+							'template': 'Template'
+						}
+					},
+					{
+						type: 'property',
+						displayName: 'Property',
+						key: 'groupingPropertyField',
+						default: 'status',
+						placeholder: 'Property',
+						shouldHide: (config: any) => config.get('groupingMode') !== 'property'
+					},
+					{
+						type: 'text',
+						displayName: 'Template',
+						key: 'groupingTemplate',
+						default: '{{note.status|kebab-case}}',
+						placeholder: '{{note.status|kebab-case}}',
+						shouldHide: (config: any) => config.get('groupingMode') !== 'template'
+					}
+				]
 			}
 		];
 		return output;
