@@ -205,6 +205,63 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		const columnEl = boardEl.createDiv('kanban-column');
 		columnEl.setAttribute('data-column-id', columnId);
 
+		// Column reordering handlers - need to be on columnEl to intercept column drag-drops
+		columnEl.addEventListener('dragover', (e: DragEvent) => {
+			const dragData = e.dataTransfer?.getData('text/plain');
+			// Check if this is a column drag (not a card drag)
+			if (dragData?.startsWith('column:')) {
+				e.preventDefault();
+				if (e.dataTransfer) {
+					e.dataTransfer.dropEffect = 'move';
+				}
+				
+				if (this.draggedColumnId && this.draggedColumnId !== columnId) {
+					// Detect which half of the column is being hovered
+					const rect = columnEl.getBoundingClientRect();
+					const midpoint = rect.left + rect.width / 2;
+					const isLeftHalf = e.clientX < midpoint;
+					
+					console.debug('[KanbanBasesView] Column dragover:', { isLeftHalf, clientX: e.clientX, midpoint, columnId });
+					
+					// Remove both classes first
+					columnEl.removeClass('kanban-column--drop-target-left');
+					columnEl.removeClass('kanban-column--drop-target-right');
+					
+					// Add appropriate class based on which half
+					if (isLeftHalf) {
+						columnEl.addClass('kanban-column--drop-target-left');
+					} else {
+						columnEl.addClass('kanban-column--drop-target-right');
+					}
+				}
+			}
+		});
+
+		columnEl.addEventListener('dragleave', (e: DragEvent) => {
+			// Only remove classes if we're leaving the column entirely (not to a child)
+			if (e.target === columnEl) {
+				columnEl.removeClass('kanban-column--drop-target-left');
+				columnEl.removeClass('kanban-column--drop-target-right');
+			}
+		});
+
+		columnEl.addEventListener('drop', async (e: DragEvent) => {
+			const dragData = e.dataTransfer?.getData('text/plain');
+			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
+				e.preventDefault();
+				columnEl.removeClass('kanban-column--drop-target-left');
+				columnEl.removeClass('kanban-column--drop-target-right');
+				
+				// Detect which half to determine position
+				const rect = columnEl.getBoundingClientRect();
+				const midpoint = rect.left + rect.width / 2;
+				const isLeftHalf = e.clientX < midpoint;
+				const position = isLeftHalf ? 'before' : 'after';
+				
+				this.reorderColumnsRelative(this.draggedColumnId, columnId, position);
+			}
+		});
+
 		// Render column header
 		const headerEl = columnEl.createDiv('kanban-column-header');
 		headerEl.draggable = true;
@@ -235,11 +292,15 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		const cardsContainer = columnEl.createDiv('kanban-cards-container');
 
 		cardsContainer.addEventListener('dragover', (e: DragEvent) => {
-			e.preventDefault();
-			if (e.dataTransfer) {
-				e.dataTransfer.dropEffect = 'move';
+			const dragData = e.dataTransfer?.getData('text/plain');
+			// Only handle card drags here, not column drags
+			if (!dragData?.startsWith('column:')) {
+				e.preventDefault();
+				if (e.dataTransfer) {
+					e.dataTransfer.dropEffect = 'move';
+				}
+				cardsContainer.addClass('kanban-cards-container--dragover');
 			}
-			cardsContainer.addClass('kanban-cards-container--dragover');
 		});
 
 		cardsContainer.addEventListener('dragleave', () => {
@@ -247,63 +308,18 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		});
 
 		cardsContainer.addEventListener('drop', async (e: DragEvent) => {
-			e.preventDefault();
-			cardsContainer.removeClass('kanban-cards-container--dragover');
-
-			// Extract target column ID from the DOM to ensure we get the correct target
-			const targetColumnId = cardsContainer.closest('.kanban-column')?.getAttribute('data-column-id');
-
-			if (this.draggedEntry && this.draggedFromColumnId !== targetColumnId && targetColumnId) {
-				await this.updateEntryProperty(this.draggedEntry, targetColumnId);
-			}
-		});
-
-		// Column reordering handlers
-		columnEl.addEventListener('dragover', (e: DragEvent) => {
 			const dragData = e.dataTransfer?.getData('text/plain');
-			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
+			// Only handle card drops here, not column drops
+			if (!dragData?.startsWith('column:')) {
 				e.preventDefault();
-				if (e.dataTransfer) {
-					e.dataTransfer.dropEffect = 'move';
+				cardsContainer.removeClass('kanban-cards-container--dragover');
+
+				// Extract target column ID from the DOM to ensure we get the correct target
+				const targetColumnId = cardsContainer.closest('.kanban-column')?.getAttribute('data-column-id');
+
+				if (this.draggedEntry && this.draggedFromColumnId !== targetColumnId && targetColumnId) {
+					await this.updateEntryProperty(this.draggedEntry, targetColumnId);
 				}
-				
-				// Detect which half of the column is being hovered
-				const rect = columnEl.getBoundingClientRect();
-				const midpoint = rect.left + rect.width / 2;
-				const isLeftHalf = e.clientX < midpoint;
-				
-				// Remove both classes first
-				columnEl.removeClass('kanban-column--drop-target-left');
-				columnEl.removeClass('kanban-column--drop-target-right');
-				
-				// Add appropriate class based on which half
-				if (isLeftHalf) {
-					columnEl.addClass('kanban-column--drop-target-left');
-				} else {
-					columnEl.addClass('kanban-column--drop-target-right');
-				}
-			}
-		});
-
-		columnEl.addEventListener('dragleave', () => {
-			columnEl.removeClass('kanban-column--drop-target-left');
-			columnEl.removeClass('kanban-column--drop-target-right');
-		});
-
-		columnEl.addEventListener('drop', async (e: DragEvent) => {
-			e.preventDefault();
-			columnEl.removeClass('kanban-column--drop-target-left');
-			columnEl.removeClass('kanban-column--drop-target-right');
-
-			const dragData = e.dataTransfer?.getData('text/plain');
-			if (dragData?.startsWith('column:') && this.draggedColumnId && this.draggedColumnId !== columnId) {
-				// Detect which half to determine position
-				const rect = columnEl.getBoundingClientRect();
-				const midpoint = rect.left + rect.width / 2;
-				const isLeftHalf = e.clientX < midpoint;
-				const position = isLeftHalf ? 'before' : 'after';
-				
-				this.reorderColumnsRelative(this.draggedColumnId, columnId, position);
 			}
 		});
 
