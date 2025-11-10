@@ -77,13 +77,16 @@
 	border-radius: var(--radius-m);
 	padding: var(--size-4-3);
 	cursor: grab;
-	transition: box-shadow 0.2s ease, transform 0.2s ease;
+	transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
 	flex-shrink: 0;
+	user-select: none;
 }
 
 .kanban-card:hover {
 	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.15);
 	transform: translateY(calc(var(--size-2-1) * -1));
+	background-color: var(--background-secondary);
+	cursor: pointer;
 }
 
 /* Card properties use flex column for stacking */

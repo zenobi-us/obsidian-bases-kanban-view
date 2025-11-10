@@ -15,6 +15,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private draggedFromColumnId: string | null = null;
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
+	private isDragging: boolean = false;
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
@@ -400,22 +401,29 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 					card.draggable = true;
 					card.setAttribute('data-entry-path', entry.file.path);
 
-					// Add drag handlers
-					card.addEventListener('dragstart', (e: DragEvent) => {
-						this.draggedEntry = entry;
-						this.draggedFromColumnId = columnId;
-						card.classList.add('kanban-card--dragging');
-						if (e.dataTransfer) {
-							e.dataTransfer.effectAllowed = 'move';
-							e.dataTransfer.setData('text/plain', entry.file.path);
-						}
-					});
+				// Add drag handlers
+				card.addEventListener('dragstart', (e: DragEvent) => {
+					this.isDragging = true;
+					this.draggedEntry = entry;
+					this.draggedFromColumnId = columnId;
+					card.classList.add('kanban-card--dragging');
+					if (e.dataTransfer) {
+						e.dataTransfer.effectAllowed = 'move';
+						e.dataTransfer.setData('text/plain', entry.file.path);
+					}
+				});
 
-					card.addEventListener('dragend', () => {
-						card.classList.remove('kanban-card--dragging');
-						this.draggedEntry = null;
-						this.draggedFromColumnId = null;
-					});
+				card.addEventListener('dragend', () => {
+					this.isDragging = false;
+					card.classList.remove('kanban-card--dragging');
+					this.draggedEntry = null;
+					this.draggedFromColumnId = null;
+				});
+
+				// Add click handler
+				card.addEventListener('click', (e: MouseEvent) => {
+					this._handleCardClick(e);
+				});
 
 					// Render only visible properties (in user's configured order)
 					if (this.config) {
@@ -466,23 +474,30 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		card.draggable = true;
 		card.setAttribute('data-entry-path', entry.file.path);
 
-		// dragstart handler
-		card.addEventListener('dragstart', (e: DragEvent) => {
-			this.draggedEntry = entry;
-			this.draggedFromColumnId = (e.target as HTMLElement).closest('.kanban-column')?.getAttribute('data-column-id') || null;
-			card.addClass('kanban-card--dragging');
-			if (e.dataTransfer) {
-				e.dataTransfer.effectAllowed = 'move';
-				e.dataTransfer.setData('text/plain', entry.file.path);
-			}
-		});
+	// dragstart handler
+	card.addEventListener('dragstart', (e: DragEvent) => {
+		this.isDragging = true;
+		this.draggedEntry = entry;
+		this.draggedFromColumnId = (e.target as HTMLElement).closest('.kanban-column')?.getAttribute('data-column-id') || null;
+		card.addClass('kanban-card--dragging');
+		if (e.dataTransfer) {
+			e.dataTransfer.effectAllowed = 'move';
+			e.dataTransfer.setData('text/plain', entry.file.path);
+		}
+	});
 
-		// dragend handler
-		card.addEventListener('dragend', () => {
-			card.removeClass('kanban-card--dragging');
-			this.draggedEntry = null;
-			this.draggedFromColumnId = null;
-		});
+	// dragend handler
+	card.addEventListener('dragend', () => {
+		this.isDragging = false;
+		card.removeClass('kanban-card--dragging');
+		this.draggedEntry = null;
+		this.draggedFromColumnId = null;
+	});
+
+	// click handler
+	card.addEventListener('click', (e: MouseEvent) => {
+		this._handleCardClick(e);
+	});
 
 		// Render only visible properties (in user's configured order)
 		if (this.config) {
@@ -504,6 +519,37 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 					}
 				}
 			}
+		}
+	}
+
+	private _handleCardClick(event: MouseEvent): void {
+		try {
+			const cardElement = (event.target as HTMLElement).closest('.kanban-card');
+			if (!cardElement) {
+				console.debug('[KanbanBasesView] Click target is not a card element');
+				return;
+			}
+
+			// Prevent opening if dragging is in progress
+			if (this.isDragging) {
+				console.debug('[KanbanBasesView] Drag in progress, preventing card open');
+				return;
+			}
+
+			// Extract record identifier from card data attribute
+			const recordId = cardElement.getAttribute('data-entry-path');
+			if (!recordId) {
+				console.warn('[KanbanBasesView] Card element missing data-entry-path attribute');
+				return;
+			}
+
+			console.debug(`[KanbanBasesView] Opening record: ${recordId}`);
+
+			// Use Obsidian workspace API to open the record
+			this.app.workspace.openLinkText(recordId, '', false);
+
+		} catch (error) {
+			console.warn('[KanbanBasesView] Error opening record:', error);
 		}
 	}
 
