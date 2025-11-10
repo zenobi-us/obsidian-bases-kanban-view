@@ -3,7 +3,6 @@ import {
 	QueryController,
 	ViewOption,
 	BasesEntry,
-	BasesPropertyId,
 	HoverParent,
 	HoverPopover,
 } from 'obsidian';
@@ -11,18 +10,13 @@ import { VirtualScroller } from '../utils/VirtualScroller';
 
 export class KanbanBasesView extends BasesView implements HoverParent {
 	public hoverPopover: HoverPopover | null = null;
-	private groupByPropertyId: BasesPropertyId = 'status' as BasesPropertyId;
 	private containerEl: HTMLElement;
 	private draggedEntry: BasesEntry | null = null;
 	private draggedFromColumnId: string | null = null;
 	private draggedColumnId: string | null = null;
 	private columnOrderMap: Map<string, string[]> = new Map();
 	private seenColumnsMap: Map<string, Set<string>> = new Map();
-	private lastDataSignature: string = '';
-	private groupingMode: 'property' | 'template' = 'property';
-	private groupingPropertyField: BasesPropertyId = 'status' as BasesPropertyId;
-	private groupingTemplate: string = '{{note.status}}';
-	private normalizePropertyValue: boolean = true;
+	private hiddenColumns: Set<string> = new Set();
 
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
@@ -31,131 +25,6 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	constructor(controller: QueryController, scrollEl: HTMLElement) {
 		super(controller);
 		this.containerEl = scrollEl.createDiv('kanban-bases-view-container');
-	}
-
-	private getDataSignature(): string {
-		// Create a signature of current data to detect filter changes
-		if (!this.data || !this.data.data) {
-			return '';
-		}
-		// Use data length + sum of entry file paths for a simple but effective signature
-		return `size:${this.data.data.length}|hash:${this.data.data
-			.map((e) => e.file.path)
-			.join(',')}`;
-	}
-
-	private flushStaleColumns(): void {
-		// When data changes significantly (e.g., filter applied), remove persisted columns
-		// that no longer exist in the current dataset for any grouping property
-		const currentSignature = this.getDataSignature();
-
-		if (this.lastDataSignature && currentSignature !== this.lastDataSignature) {
-			console.debug('[KanbanBasesView] Data changed, flushing stale columns');
-
-			// For the current grouping property, get current columns from data
-			const groupedEntries = this.groupEntries();
-			const currentColumnIds = new Set(groupedEntries.keys());
-
-			// Remove persisted columns that no longer exist in data
-			const seenColumns = this.seenColumnsMap.get(this.groupByPropertyId || 'default');
-			if (seenColumns) {
-				const beforeFlush = seenColumns.size;
-				// Keep only columns that exist in current data
-				const flushedColumns = new Set([...seenColumns].filter((id) => currentColumnIds.has(id)));
-				this.seenColumnsMap.set(this.groupByPropertyId || 'default', flushedColumns);
-
-				if (flushedColumns.size !== beforeFlush) {
-					console.debug(
-						`[KanbanBasesView] Flushed stale columns: ${beforeFlush} -> ${flushedColumns.size}`
-					);
-					this.saveColumnOrder();
-				}
-			}
-		}
-
-		this.lastDataSignature = currentSignature;
-	}
-
-
-	private resolveGroupingValue(entry: BasesEntry): string {
-		// Resolve grouping value from entry based on mode
-		if (this.groupingMode === 'template') {
-			return this.renderTemplate(this.groupingTemplate, entry);
-		} else {
-			// property mode: get field value, optionally normalize
-			const value = entry.getValue(this.groupingPropertyField);
-			if (!value) return 'Ungrouped';
-			
-			let columnKey = String(value);
-			if (this.normalizePropertyValue) {
-				columnKey = this.kebabCase(columnKey);
-			}
-			return columnKey;
-		}
-	}
-
-	private renderTemplate(template: string, entry: BasesEntry): string {
-		// Simple template renderer: {{note.fieldName|filter}}
-		let result = template;
-		
-		// Match {{note.fieldName}} or {{note.fieldName|filter|filter}}
-		const regex = /\{\{note\.(\w+)(?:\|(\w+(?:\|\w+)*))?\}\}/g;
-		
-		result = result.replace(regex, (match, fieldName, filters) => {
-			let value = String(entry.getValue(fieldName as BasesPropertyId) || '');
-			
-			// Apply filters if present
-			if (filters) {
-				const filterList = filters.split('|');
-				for (const filter of filterList) {
-					value = this.applyFilter(value, filter);
-				}
-			}
-			
-			return value;
-		});
-		
-		return result || 'Ungrouped';
-	}
-
-	private applyFilter(value: string, filter: string): string {
-		// Apply text transformation filters
-		switch (filter.toLowerCase()) {
-			case 'lowercase':
-				return value.toLowerCase();
-			case 'uppercase':
-				return value.toUpperCase();
-			case 'capitalize':
-				return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
-			case 'kebab-case':
-			case 'kebab':
-				return this.kebabCase(value);
-			case 'snake-case':
-			case 'snake':
-				return this.snakeCase(value);
-			case 'trim':
-				return value.trim();
-			default:
-				return value;
-		}
-	}
-
-	private kebabCase(str: string): string {
-		// Convert to kebab-case: "Hello World" -> "hello-world"
-		return str
-			.trim()
-			.toLowerCase()
-			.replace(/\s+/g, '-')
-			.replace(/[^a-z0-9-]/g, '');
-	}
-
-	private snakeCase(str: string): string {
-		// Convert to snake_case: "Hello World" -> "hello_world"
-		return str
-			.trim()
-			.toLowerCase()
-			.replace(/\s+/g, '_')
-			.replace(/[^a-z0-9_]/g, '');
 	}
 
 	private loadColumnOrder(): void {
@@ -185,6 +54,20 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				}
 			}
 		}
+
+		// Load hidden columns from config
+		if (this.config) {
+			const hiddenColumnsJson = this.config.get('kanban-hiddenColumns');
+			if (hiddenColumnsJson && typeof hiddenColumnsJson === 'string') {
+				try {
+					const hidden = JSON.parse(hiddenColumnsJson);
+					this.hiddenColumns = new Set(hidden as string[]);
+					console.debug('[KanbanBasesView] Loaded hidden columns:', Array.from(this.hiddenColumns));
+				} catch (e) {
+					console.warn('[KanbanBasesView] Failed to load hidden columns:', e);
+				}
+			}
+		}
 	}
 
 	private saveColumnOrder(): void {
@@ -199,6 +82,12 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		if (this.config) {
 			this.config.set('kanban-seenColumns', JSON.stringify(seenData));
 			console.debug('[KanbanBasesView] Saved seen columns:', Object.keys(seenData));
+		}
+
+		// Save hidden columns to config
+		if (this.config) {
+			this.config.set('kanban-hiddenColumns', JSON.stringify(Array.from(this.hiddenColumns)));
+			console.debug('[KanbanBasesView] Saved hidden columns:', Array.from(this.hiddenColumns));
 		}
 	}
 
@@ -230,9 +119,9 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private render(): void {
-		console.debug('[KanbanBasesView] Rendering board', {
+		console.debug('[KanbanBasesView] Rendering board using groupedData', {
 			hasData: !!this.data,
-			hasGroupingProperty: !!this.groupByPropertyId,
+			hasGroupedData: !!this.data?.groupedData,
 		});
 
 		if (!this.containerEl) {
@@ -247,7 +136,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			return;
 		}
 
-		if (!this.data.data || this.data.data.length === 0) {
+		if (!this.data.groupedData || this.data.groupedData.length === 0) {
 			this.renderEmptyState();
 			return;
 		}
@@ -257,47 +146,15 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 	private loadConfig(): void {
 		if (this.config) {
-			const configValue = this.config.get('groupByPropertyId');
-			this.groupByPropertyId = (configValue as BasesPropertyId) || ('status' as BasesPropertyId);
-			
-			const modeValue = this.config.get('groupingMode');
-			this.groupingMode = (modeValue as 'property' | 'template') || 'property';
-			
-			const fieldValue = this.config.get('groupingPropertyField');
-			this.groupingPropertyField = (fieldValue as BasesPropertyId) || ('status' as BasesPropertyId);
-			
-			const templateValue = this.config.get('groupingTemplate');
-			this.groupingTemplate = (templateValue as string) || '{{note.status|kebab-case}}';
-			
-			const normalizeValue = this.config.get('normalizePropertyValue');
-			this.normalizePropertyValue = normalizeValue !== false; // Default to true
+			// Grouping config is no longer needed - it's handled by Obsidian's groupedData
+			console.debug('[KanbanBasesView] Config loaded (grouping controlled by Obsidian)');
 		}
 		this.loadColumnOrder();
 	}
 
-	private groupEntries(): Map<string, BasesEntry[]> {
-		const grouped = new Map<string, BasesEntry[]>();
-
-		if (!this.data || !this.data.data) {
-			console.warn('[KanbanBasesView] groupEntries called but data is missing');
-			return grouped;
-		}
-
-		if (!this.groupByPropertyId) {
-			console.warn('[KanbanBasesView] groupEntries called but groupByPropertyId is not set');
-			return grouped;
-		}
-
-		for (const entry of this.data.data) {
-			const columnKey = this.resolveGroupingValue(entry);
-
-			if (!grouped.has(columnKey)) {
-				grouped.set(columnKey, []);
-			}
-			grouped.get(columnKey)!.push(entry);
-		}
-
-		return grouped;
+	private _getColumnIdKey(): string {
+		// Key for storing column order/seen columns - using default as we don't have grouping config anymore
+		return 'default';
 	}
 
 	private renderNoGroupingError(): void {
@@ -307,7 +164,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 		const errorEl = this.containerEl.createDiv('kanban-error');
 		errorEl.createEl('p', {
-			text: 'No grouping property configured. Please select a "Group by" property in the view options.',
+			text: 'No data available. Configure your Bases query to see items in the Kanban view.',
 			cls: 'kanban-error-message',
 		});
 	}
@@ -330,41 +187,46 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 			return;
 		}
 
-		if (!this.data || !this.data.data) {
-			console.warn('[KanbanBasesView] renderBoard called but data is missing');
+		if (!this.data || !this.data.groupedData) {
+			console.warn('[KanbanBasesView] renderBoard called but groupedData is missing');
 			return;
 		}
 
-		// Flush stale columns when filter changes
-		this.flushStaleColumns();
-
 		const boardEl = this.containerEl.createDiv('kanban-board');
-		const groupedEntries = this.groupEntries();
+		const groupKey = this._getColumnIdKey();
+
+		// Convert groupedData to columnId -> entries format
+		const groupedEntries = new Map<string, BasesEntry[]>();
+		const allColumnIds: Set<string> = new Set();
+
+		for (const group of this.data.groupedData) {
+			// Use "Backlog" for undefined/null keys
+			const columnId = group.key === null || group.key === undefined ? 'Backlog' : String(group.key);
+			groupedEntries.set(columnId, group.entries);
+			allColumnIds.add(columnId);
+		}
 
 		if (groupedEntries.size === 0) {
 			this.renderEmptyState();
 			return;
 		}
 
-		// Get all column IDs from grouped data
-		const dataColumnIds = Array.from(groupedEntries.keys());
-
 		// Get previously seen columns for this grouping
-		const seenColumns = this.seenColumnsMap.get(this.groupByPropertyId || 'default') || new Set();
+		const seenColumns = this.seenColumnsMap.get(groupKey) || new Set();
 
 		// Merge data columns with seen columns to preserve empty columns
-		const allColumnIds = new Set([...dataColumnIds, ...seenColumns]);
-		const allColumnIdsArray = Array.from(allColumnIds);
+		const mergedColumnIds = new Set([...allColumnIds, ...seenColumns]);
+		const mergedColumnIdsArray = Array.from(mergedColumnIds);
 
 		// Track new columns for next save
-		this.seenColumnsMap.set(this.groupByPropertyId || 'default', allColumnIds);
+		this.seenColumnsMap.set(groupKey, mergedColumnIds);
 
 		// Initialize or get stored column order for this grouping
-		let columnOrder = this.columnOrderMap.get(this.groupByPropertyId || 'default') || [];
+		let columnOrder = this.columnOrderMap.get(groupKey) || [];
 
 		// Add any new columns not yet in order
 		let orderChanged = false;
-		for (const columnId of allColumnIdsArray) {
+		for (const columnId of mergedColumnIdsArray) {
 			if (!columnOrder.includes(columnId)) {
 				columnOrder.push(columnId);
 				orderChanged = true;
@@ -373,20 +235,26 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 		// Remove columns that have been explicitly deleted (not in seen list)
 		const initialLength = columnOrder.length;
-		columnOrder = columnOrder.filter((id) => allColumnIds.has(id));
+		columnOrder = columnOrder.filter((id) => mergedColumnIds.has(id));
 		if (columnOrder.length !== initialLength) {
 			orderChanged = true;
 		}
 
 		// Save if order changed
 		if (orderChanged) {
-			this.columnOrderMap.set(this.groupByPropertyId || 'default', columnOrder);
+			this.columnOrderMap.set(groupKey, columnOrder);
 			this.saveColumnOrder();
 		}
 
 		// Render columns in saved order with drop indicators between them
 		for (let i = 0; i < columnOrder.length; i++) {
 			const columnId = columnOrder[i];
+
+			// Skip hidden columns
+			if (this.hiddenColumns.has(columnId)) {
+				continue;
+			}
+
 			const entries = groupedEntries.get(columnId) || [];
 
 			// Render drop indicator before this column
@@ -397,8 +265,13 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 
 		// Final drop indicator after last column
-		if (columnOrder.length > 0) {
-			this.renderColumnDropIndicator(boardEl, columnOrder[columnOrder.length - 1], 'after');
+		const visibleColumns = columnOrder.filter((id) => !this.hiddenColumns.has(id));
+		if (visibleColumns.length > 0) {
+			this.renderColumnDropIndicator(
+				boardEl,
+				visibleColumns[visibleColumns.length - 1],
+				'after'
+			);
 		}
 	}
 
@@ -467,8 +340,19 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		headerEl.createDiv('kanban-column-title', (el) => {
 			el.setText(columnId);
 		});
+
 		headerEl.createDiv('kanban-column-count', (el) => {
 			el.setText(`${entries.length}`);
+		});
+
+		// Add remove button to hide column
+		headerEl.createDiv('kanban-column-remove', (el) => {
+			el.setText('×');
+			el.addEventListener('click', (e: MouseEvent) => {
+				e.preventDefault();
+				e.stopPropagation();
+				this.hideColumn(columnId);
+			});
 		});
 
 		// Render cards container
@@ -652,11 +536,17 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 	}
 
+	private hideColumn(columnId: string): void {
+		this.hiddenColumns.add(columnId);
+		this.saveColumnOrder();
+		this.render();
+	}
+
 	private reorderColumns(sourceColumnId: string, targetColumnId: string): void {
-		if (!this.groupByPropertyId) return;
+		const groupKey = this._getColumnIdKey();
 
 		// Get current column order for this grouping
-		let order = this.columnOrderMap.get(this.groupByPropertyId) || [];
+		let order = this.columnOrderMap.get(groupKey) || [];
 
 		const sourceIndex = order.indexOf(sourceColumnId);
 		const targetIndex = order.indexOf(targetColumnId);
@@ -668,7 +558,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		order.splice(targetIndex, 0, moved);
 
 		// Save new order
-		this.columnOrderMap.set(this.groupByPropertyId, order);
+		this.columnOrderMap.set(groupKey, order);
 		this.saveColumnOrder();
 
 		// Re-render with new order
@@ -676,10 +566,10 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	private reorderColumnsRelative(sourceColumnId: string, targetColumnId: string, position: 'before' | 'after'): void {
-		if (!this.groupByPropertyId) return;
+		const groupKey = this._getColumnIdKey();
 
 		// Get current column order for this grouping
-		let order = this.columnOrderMap.get(this.groupByPropertyId) || [];
+		let order = this.columnOrderMap.get(groupKey) || [];
 
 		const sourceIndex = order.indexOf(sourceColumnId);
 		const targetIndex = order.indexOf(targetColumnId);
@@ -694,7 +584,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		order.splice(insertIndex, 0, moved);
 
 		// Save new order
-		this.columnOrderMap.set(this.groupByPropertyId, order);
+		this.columnOrderMap.set(groupKey, order);
 		this.saveColumnOrder();
 
 		// Re-render with new order
@@ -703,8 +593,8 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
 	private async updateEntryProperty(entry: BasesEntry, newColumnValue: string): Promise<void> {
 		try {
-			if (!this.groupByPropertyId || !this.data) {
-				console.warn('[KanbanBasesView] Cannot update: missing groupByPropertyId or data');
+			if (!this.data) {
+				console.warn('[KanbanBasesView] Cannot update: missing data');
 				return;
 			}
 
@@ -713,24 +603,19 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 				return;
 			}
 
-			console.log('[KanbanBasesView] Updating entry property:', {
+			console.log('[KanbanBasesView] Updating entry to new column:', {
 				entryPath: entry.file.path,
-				propertyId: this.groupByPropertyId,
-				newValue: newColumnValue,
+				newColumn: newColumnValue,
 			});
 
-			// Update the entry's property using the file manager's processFrontMatter
-			await this.app.fileManager.processFrontMatter(entry.file, (frontmatter: any) => {
-				frontmatter[this.groupByPropertyId!] = newColumnValue;
-			});
+			// Note: Since grouping is now handled by Obsidian, we need to update the entry's
+			// grouping property. The actual property to update depends on what the user
+			// configured in Obsidian's groupBy settings. For now, this is a placeholder.
+			// In a real implementation, we'd need to know what property Obsidian is grouping by.
 
-			console.log('[KanbanBasesView] Successfully updated entry property:', {
-				entryPath: entry.file.path,
-				propertyId: this.groupByPropertyId,
-				newValue: newColumnValue,
-			});
+			console.log('[KanbanBasesView] Entry drag-drop update requires grouping property info from Obsidian API');
 
-			// Re-render to reflect the updated data
+			// Re-render to reflect any changes
 			this.render();
 		} catch (error) {
 			console.error('[KanbanBasesView] Error updating entry property:', error);
@@ -738,47 +623,8 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	}
 
 	static getViewOptions(): ViewOption[] {
-		const output: ViewOption[] = [
-			{
-				type: 'group',
-				displayName: 'Grouping',
-				items: [
-					{
-						type: 'dropdown',
-						displayName: 'Mode',
-						key: 'groupingMode',
-						default: 'property',
-						options: {
-							'property': 'Property',
-							'template': 'Template'
-						}
-					},
-					{
-						type: 'property',
-						displayName: 'Property',
-						key: 'groupingPropertyField',
-						default: 'status',
-						placeholder: 'Property',
-						shouldHide: (config: any) => config.get('groupingMode') !== 'property'
-					},
-					{
-						type: 'toggle',
-						displayName: 'Normalize property value',
-						key: 'normalizePropertyValue',
-						default: true,
-						shouldHide: (config: any) => config.get('groupingMode') !== 'property'
-					},
-					{
-						type: 'text',
-						displayName: 'Template',
-						key: 'groupingTemplate',
-						default: '{{note.status|kebab-case}}',
-						placeholder: '{{note.status|kebab-case}}',
-						shouldHide: (config: any) => config.get('groupingMode') !== 'template'
-					}
-				]
-			}
-		];
+		// Grouping is now controlled by Obsidian's built-in API, not via view options
+		const output: ViewOption[] = [];
 		return output;
 	}
 }
