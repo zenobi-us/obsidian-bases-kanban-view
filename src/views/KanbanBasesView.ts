@@ -19,6 +19,10 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	private columnOrderMap: Map<string, string[]> = new Map();
 	private seenColumnsMap: Map<string, Set<string>> = new Map();
 	private lastDataSignature: string = '';
+	private groupingMode: 'property' | 'template' = 'property';
+	private groupingPropertyField: BasesPropertyId = 'status' as BasesPropertyId;
+	private groupingTemplate: string = '{{note.status}}';
+
 	private virtualScrollers: Map<string, VirtualScroller<BasesEntry>> = new Map();
 
 	readonly type = 'kanban';
@@ -69,6 +73,82 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 
 		this.lastDataSignature = currentSignature;
+	}
+
+
+	private resolveGroupingValue(entry: BasesEntry): string {
+		// Resolve grouping value from entry based on mode
+		if (this.groupingMode === 'template') {
+			return this.renderTemplate(this.groupingTemplate, entry);
+		} else {
+			// property mode: get field value with kebab-case filter
+			const value = entry.getValue(this.groupingPropertyField);
+			return value ? this.kebabCase(String(value)) : 'Ungrouped';
+		}
+	}
+
+	private renderTemplate(template: string, entry: BasesEntry): string {
+		// Simple template renderer: {{note.fieldName|filter}}
+		let result = template;
+		
+		// Match {{note.fieldName}} or {{note.fieldName|filter|filter}}
+		const regex = /\{\{note\.(\w+)(?:\|(\w+(?:\|\w+)*))?\}\}/g;
+		
+		result = result.replace(regex, (match, fieldName, filters) => {
+			let value = String(entry.getValue(fieldName as BasesPropertyId) || '');
+			
+			// Apply filters if present
+			if (filters) {
+				const filterList = filters.split('|');
+				for (const filter of filterList) {
+					value = this.applyFilter(value, filter);
+				}
+			}
+			
+			return value;
+		});
+		
+		return result || 'Ungrouped';
+	}
+
+	private applyFilter(value: string, filter: string): string {
+		// Apply text transformation filters
+		switch (filter.toLowerCase()) {
+			case 'lowercase':
+				return value.toLowerCase();
+			case 'uppercase':
+				return value.toUpperCase();
+			case 'capitalize':
+				return value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+			case 'kebab-case':
+			case 'kebab':
+				return this.kebabCase(value);
+			case 'snake-case':
+			case 'snake':
+				return this.snakeCase(value);
+			case 'trim':
+				return value.trim();
+			default:
+				return value;
+		}
+	}
+
+	private kebabCase(str: string): string {
+		// Convert to kebab-case: "Hello World" -> "hello-world"
+		return str
+			.trim()
+			.toLowerCase()
+			.replace(/\s+/g, '-')
+			.replace(/[^a-z0-9-]/g, '');
+	}
+
+	private snakeCase(str: string): string {
+		// Convert to snake_case: "Hello World" -> "hello_world"
+		return str
+			.trim()
+			.toLowerCase()
+			.replace(/\s+/g, '_')
+			.replace(/[^a-z0-9_]/g, '');
 	}
 
 	private loadColumnOrder(): void {
@@ -172,6 +252,15 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		if (this.config) {
 			const configValue = this.config.get('groupByPropertyId');
 			this.groupByPropertyId = (configValue as BasesPropertyId) || ('status' as BasesPropertyId);
+			
+			const modeValue = this.config.get('groupingMode');
+			this.groupingMode = (modeValue as 'property' | 'template') || 'property';
+			
+			const fieldValue = this.config.get('groupingPropertyField');
+			this.groupingPropertyField = (fieldValue as BasesPropertyId) || ('status' as BasesPropertyId);
+			
+			const templateValue = this.config.get('groupingTemplate');
+			this.groupingTemplate = (templateValue as string) || '{{note.status|kebab-case}}';
 		}
 		this.loadColumnOrder();
 	}
@@ -190,8 +279,7 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 		}
 
 		for (const entry of this.data.data) {
-			const value = entry.getValue(this.groupByPropertyId);
-			const columnKey = value ? String(value) : 'Ungrouped';
+			const columnKey = this.resolveGroupingValue(entry);
 
 			if (!grouped.has(columnKey)) {
 				grouped.set(columnKey, []);
@@ -642,11 +730,30 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 	static getViewOptions(): ViewOption[] {
 		const output: ViewOption[] = [
 			{
+				type: 'dropdown',
+				displayName: 'Grouping mode',
+				key: 'groupingMode',
+				default: 'property',
+				options: {
+					'property': 'Property',
+					'template': 'Template'
+				}
+			},
+			{
 				type: 'property',
-				displayName: 'Group by',
-				key: 'groupByPropertyId',
+				displayName: 'Group by property',
+				key: 'groupingPropertyField',
 				default: 'status',
-				placeholder: 'Property'
+				placeholder: 'Property',
+				shouldHide: (config: any) => config.get('groupingMode') !== 'property'
+			},
+			{
+				type: 'text',
+				displayName: 'Grouping template',
+				key: 'groupingTemplate',
+				default: '{{note.status|kebab-case}}',
+				placeholder: '{{note.status|kebab-case}}',
+				shouldHide: (config: any) => config.get('groupingMode') !== 'template'
 			}
 		];
 		return output;
