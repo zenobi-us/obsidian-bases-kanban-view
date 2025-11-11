@@ -1,3 +1,4 @@
+import React from 'react';
 import { Root, createRoot } from 'react-dom/client';
 import { App, BasesQueryResult, BasesPropertyId, QueryController } from 'obsidian';
 import { KanbanView } from '../components/KanbanView';
