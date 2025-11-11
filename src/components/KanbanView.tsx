@@ -1,3 +1,4 @@
+import React from 'react';
 import { App, BasesQueryResult, BasesPropertyId, QueryController } from 'obsidian';
 import { AppProvider } from '../context/AppContext';
 import { KanbanBoard } from './KanbanBoard';

@@ -1,3 +1,4 @@
+import React from 'react';
 import { BasesEntry, BasesPropertyId } from 'obsidian';
 import {
   getTier1Properties,

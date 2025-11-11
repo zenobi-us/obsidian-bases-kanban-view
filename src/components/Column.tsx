@@ -1,3 +1,4 @@
+import React from 'react';
 import { KanbanGroup } from '../types/components';
 import { BasesPropertyId } from 'obsidian';
 import { Card } from './Card';
