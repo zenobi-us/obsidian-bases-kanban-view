@@ -7,6 +7,11 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+  },
   "devDependencies": {
     "@tanstack/react-virtual": "^3.13.12",
     "@testing-library/jest-dom": "^6.9.1",
@@ -18,10 +23,12 @@
     "@typescript-eslint/eslint-plugin": "5.2.0",
     "@typescript-eslint/parser": "5.2.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/coverage-istanbul": "^4.0.8",
     "@vitest/coverage-v8": "^4.0.8",
     "@vitest/ui": "^4.0.8",
     "builtin-modules": "3.2.0",
     "esbuild": "^0.26.0",
+    "happy-dom": "^20.0.10",
     "jsdom": "^27.1.0",
     "obsidian": "latest",
     "react": "^19.2.0",
