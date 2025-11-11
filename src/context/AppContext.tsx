@@ -1,4 +1,4 @@
-import { createContext, ReactNode, PropsWithChildren } from 'react';
+import React, { createContext, ReactNode, PropsWithChildren } from 'react';
 import { App } from 'obsidian';
 
 /**

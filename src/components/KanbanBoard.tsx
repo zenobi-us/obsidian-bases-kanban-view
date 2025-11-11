@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { KanbanGroup, KanbanBoardProps } from '../types/components';
 import { Column } from './Column';
 
