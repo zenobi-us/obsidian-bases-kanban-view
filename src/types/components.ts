@@ -15,6 +15,7 @@ export interface KanbanBoardProps {
   queryResult: BasesQueryResult & { groupedData?: GroupedDataItem[] };
   groupByPropertyId: string | null;
   allProperties: BasesPropertyId[];
+  onCardDrop?: (cardId: string, targetGroupId: string) => Promise<void>;
 }
 
 /**
