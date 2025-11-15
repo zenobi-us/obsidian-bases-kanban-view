@@ -48,6 +48,7 @@ export const KanbanView = ({
   return (
     <AppProvider app={app}>
       <GroupingProvider
+        app={app}
         queryController={queryController}
         groupByFieldId={groupByPropertyId}
         groupedData={(queryResult as any).groupedData}

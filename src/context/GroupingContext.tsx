@@ -5,7 +5,7 @@ import React, {
   useCallback,
   PropsWithChildren,
 } from "react";
-import { QueryController } from "obsidian";
+import { QueryController, App } from "obsidian";
 import { KanbanGroup, GroupedDataItem } from "../types/components";
 import { useKanbanData } from "../hooks/useKanbanData";
 
@@ -34,11 +34,12 @@ const GroupingContext = createContext<GroupingContextType | undefined>(
  * - Fetches data from Obsidian Bases API via useKanbanData
  * - useMemo groups entries whenever groupByFieldId changes
  * - Entries are auto-updated from API, triggering re-groups
- * - moveCard handler has access to queryController for persistence
+ * - moveCard handler has access to app and queryController for persistence
  * - Components are pure rendering functions with no state
  * - Loading/error states propagate to UI
  */
 export interface GroupingProviderProps extends PropsWithChildren {
+  app: App;
   groupByFieldId: string | null;
   queryController: QueryController;
   groupedData?: GroupedDataItem[];
@@ -47,6 +48,7 @@ export interface GroupingProviderProps extends PropsWithChildren {
 }
 
 export const GroupingProvider = ({
+  app,
   children,
   groupByFieldId,
   queryController,
@@ -103,52 +105,86 @@ export const GroupingProvider = ({
     return result;
   }, [dataToUse, groupByFieldId]);
 
-  /**
-   * Move card from source group to target group
-   * Calls Obsidian API to update the entry property
-   * KanbanBasesView.onDataUpdated() will trigger, flowing new data down
-   */
-  const moveCard = useCallback(
-    async (cardId: string, targetGroupId: string): Promise<void> => {
-      try {
-        const sourceGroup = groups.find((g) =>
-          g.entries.some((entry) => entry.file.path === cardId),
-        );
+   /**
+    * Move card from source group to target group
+    * Calls Obsidian API to update the entry property
+    * KanbanBasesView.onDataUpdated() will trigger, flowing new data down
+    */
+   const moveCard = useCallback(
+     async (cardId: string, targetGroupId: string): Promise<void> => {
+       try {
+         const sourceGroup = groups.find((g) =>
+           g.entries.some((entry) => entry.file.path === cardId),
+         );
 
-        if (!sourceGroup) {
-          console.warn(
-            "[GroupingContext] Source group not found for card:",
-            cardId,
-          );
-          return;
-        }
+         if (!sourceGroup) {
+           console.warn(
+             "[GroupingContext] Source group not found for card:",
+             cardId,
+           );
+           return;
+         }
 
-        const entry = sourceGroup.entries.find((e) => e.file.path === cardId);
-        if (!entry) {
-          console.warn("[GroupingContext] Entry not found:", cardId);
-          return;
-        }
+         const entry = sourceGroup.entries.find((e) => e.file.path === cardId);
+         if (!entry) {
+           console.warn("[GroupingContext] Entry not found:", cardId);
+           return;
+         }
 
-        console.debug("[GroupingContext] Moving card:", {
-          cardId,
-          from: sourceGroup.id,
-          to: targetGroupId,
-          groupByFieldId,
-        });
+         console.debug("[GroupingContext] Moving card:", {
+           cardId,
+           from: sourceGroup.id,
+           to: targetGroupId,
+           groupByFieldId,
+         });
 
-        // TODO: Implement entry property update via queryController API
-        // This will be done in Story 4.5.6
-        // For now, just log to verify flow
-        console.debug(
-          "[GroupingContext] TODO: Update entry property via queryController",
-        );
-      } catch (error) {
-        console.error("[GroupingContext] Error moving card:", error);
-        throw error;
-      }
-    },
-    [groups, groupByFieldId, queryController],
-  );
+         // Update entry property via Obsidian API
+         // targetGroupId is the property value to set (e.g., "Done", "In Progress")
+         if (!groupByFieldId) {
+           console.warn(
+             "[GroupingContext] Cannot move card: groupByFieldId not set",
+           );
+           return;
+         }
+
+         // Get the file from the entry
+         const file = entry.file;
+         if (!file) {
+           console.error("[GroupingContext] Entry has no file:", cardId);
+           return;
+         }
+
+         // Update the entry's property value in the file's frontmatter
+         await app.fileManager.processFrontMatter(
+           file,
+           (frontmatter: any) => {
+             // Convert targetGroupId to the actual property value
+             // If targetGroupId is "Backlog" (null group), set to null
+             if (targetGroupId === "Backlog") {
+               frontmatter[groupByFieldId] = null;
+             } else {
+               frontmatter[groupByFieldId] = targetGroupId;
+             }
+             console.debug("[GroupingContext] Updated frontmatter:", {
+               cardId,
+               property: groupByFieldId,
+               value: frontmatter[groupByFieldId],
+             });
+           },
+         );
+
+         console.debug("[GroupingContext] Card moved successfully:", {
+           cardId,
+           from: sourceGroup.id,
+           to: targetGroupId,
+         });
+       } catch (error) {
+         console.error("[GroupingContext] Error moving card:", error);
+         throw error;
+       }
+     },
+     [groups, groupByFieldId, queryController, app],
+   );
 
   /**
    * Find source group for a given card

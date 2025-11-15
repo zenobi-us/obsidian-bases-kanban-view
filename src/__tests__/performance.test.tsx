@@ -64,6 +64,7 @@ describe('KanbanBoard Performance', () => {
     render(
       <AppProvider app={mockApp}>
         <GroupingProvider
+          app={mockApp}
           queryController={mockQueryController}
           groupByFieldId="note.status"
           groupedData={groupedData}
@@ -89,6 +90,7 @@ describe('KanbanBoard Performance', () => {
     const { container } = render(
       <AppProvider app={mockApp}>
         <GroupingProvider
+          app={mockApp}
           queryController={mockQueryController}
           groupByFieldId="note.status"
           groupedData={groupedData}
@@ -115,6 +117,7 @@ describe('KanbanBoard Performance', () => {
     const { container } = render(
       <AppProvider app={mockApp}>
         <GroupingProvider
+          app={mockApp}
           queryController={mockQueryController}
           groupByFieldId="note.status"
           groupedData={groupedData}
@@ -144,6 +147,7 @@ describe('KanbanBoard Performance', () => {
       render(
         <AppProvider app={mockApp}>
           <GroupingProvider
+          app={mockApp}
             queryController={mockQueryController}
             groupByFieldId="note.status"
             groupedData={groupedData}
@@ -176,6 +180,7 @@ describe('KanbanBoard Performance', () => {
       render(
         <AppProvider app={mockApp}>
           <GroupingProvider
+          app={mockApp}
             queryController={mockQueryController}
             groupByFieldId={propId}
             groupedData={groupedData}

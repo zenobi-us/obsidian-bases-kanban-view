@@ -36,6 +36,7 @@ const renderCard = (entry = mockEntry, properties = ['note.title', 'note.status'
   return render(
     <AppContext.Provider value={mockApp}>
       <GroupingProvider
+        app={mockApp}
         queryController={mockQueryController}
         groupByFieldId="note.status"
         groupedData={[]}

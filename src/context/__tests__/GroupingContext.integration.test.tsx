@@ -45,26 +45,27 @@ describe('GroupingContext Integration Tests', () => {
     vi.clearAllMocks();
   });
 
-  const renderHookWithProviders = (hook: () => unknown, options?: { baseId?: string; queryId?: string }) =>
-    renderHook(hook, {
-      wrapper: ({ children }: { children: React.ReactNode }) => {
-        const appWithBases = { ...mockApp, bases: mockBasesApi } as any;
-        return React.createElement(
-          AppProvider,
-          { app: appWithBases },
-          React.createElement(
-            GroupingProvider,
-            {
-              groupByFieldId: 'status',
-              queryController: {} as any,
-              baseId: options?.baseId || 'test-base',
-              queryId: options?.queryId || 'test-query',
-            },
-            children
-          )
-        );
-      },
-    });
+   const renderHookWithProviders = (hook: () => unknown, options?: { baseId?: string; queryId?: string }) =>
+     renderHook(hook, {
+       wrapper: ({ children }: { children: React.ReactNode }) => {
+         const appWithBases = { ...mockApp, bases: mockBasesApi } as any;
+         return React.createElement(
+           AppProvider,
+           { app: appWithBases },
+           React.createElement(
+             GroupingProvider,
+             {
+               app: appWithBases,
+               groupByFieldId: 'status',
+               queryController: {} as any,
+               baseId: options?.baseId || 'test-base',
+               queryId: options?.queryId || 'test-query',
+             },
+             children
+           )
+         );
+       },
+     });
 
   // Test 1: Loading state displays while fetching
   it('should display loading indicator while fetching data', async () => {
