@@ -1,212 +1,194 @@
 import {
-	BasesView,
-	QueryController,
-	ViewOption,
-	HoverParent,
-	HoverPopover,
-} from 'obsidian';
-import { ReactMountManager } from '../utils/reactMount';
+  BasesView,
+  QueryController,
+  ViewOption,
+  HoverParent,
+  HoverPopover,
+} from "obsidian";
+import { ReactMountManager } from "../utils/reactMount";
 
 export class KanbanBasesView extends BasesView implements HoverParent {
-	public hoverPopover: HoverPopover | null = null;
-	private containerEl: HTMLElement;
-	private queryController: QueryController;
-	private groupByFieldId: string | null = null;
-	private columnOrderMap: Map<string, string[]> = new Map();
-	private reactMountManager: ReactMountManager | null = null;
+  public hoverPopover: HoverPopover | null = null;
+  private containerEl: HTMLElement;
+  private queryController: QueryController;
+  private groupByFieldId: string | null = null;
+  private columnOrderMap: Map<string, string[]> = new Map();
+  private reactMountManager: ReactMountManager | null = null;
 
-	readonly type = 'kanban';
+  readonly type = "kanban";
 
-	constructor(controller: QueryController, scrollEl: HTMLElement) {
-		super(controller);
-		this.queryController = controller;
-		this.containerEl = scrollEl.createDiv('kanban-bases-view-container');
-		this.reactMountManager = new ReactMountManager();
-	}
+  constructor(controller: QueryController, scrollEl: HTMLElement) {
+    super(controller);
+    this.queryController = controller;
+    this.containerEl = scrollEl.createDiv("kanban-bases-view-container");
+    this.reactMountManager = new ReactMountManager();
+  }
 
-	private loadColumnOrder(): void {
-		// Load column name order from config (comma-separated list)
-		if (this.config) {
-			const columnNames = this.config.get('kanban-columnNames');
-			if (columnNames && typeof columnNames === 'string') {
-				// Parse comma-separated column names
-				const names = columnNames
-					.split(',')
-					.map((name) => name.trim())
-					.filter((name) => name.length > 0);
-				if (names.length > 0) {
-					// Set as the default column order
-					this.columnOrderMap.set('default', names);
-				}
-			}
-		}
-	}
+  private loadColumnOrder(): void {
+    // Load column name order from config (comma-separated list)
+    if (this.config) {
+      const columnNames = this.config.get("kanban-columnNames");
+      if (columnNames && typeof columnNames === "string") {
+        // Parse comma-separated column names
+        const names = columnNames
+          .split(",")
+          .map((name) => name.trim())
+          .filter((name) => name.length > 0);
+        if (names.length > 0) {
+          // Set as the default column order
+          this.columnOrderMap.set("default", names);
+        }
+      }
+    }
+  }
 
-	private saveColumnOrder(): void {
-		// Save column order to config
-		if (this.config) {
-			const data = Object.fromEntries(this.columnOrderMap);
-			this.config.set('kanban-columnOrder', JSON.stringify(data));
-			
-			// Also update kanban-columnNames with the new order
-			const groupKey = this._getColumnIdKey();
-			const columnOrder = this.columnOrderMap.get(groupKey) || [];
-			if (columnOrder.length > 0) {
-				this.config.set('kanban-columnNames', columnOrder.join(','));
-			}
-		}
-	}
+  private saveColumnOrder(): void {
+    // Save column order to config
+    if (this.config) {
+      const data = Object.fromEntries(this.columnOrderMap);
+      this.config.set("kanban-columnOrder", JSON.stringify(data));
 
-	onload(): void {
-		// Stub for now
-	}
+      // Also update kanban-columnNames with the new order
+      const groupKey = this._getColumnIdKey();
+      const columnOrder = this.columnOrderMap.get(groupKey) || [];
+      if (columnOrder.length > 0) {
+        this.config.set("kanban-columnNames", columnOrder.join(","));
+      }
+    }
+  }
 
-	onunload(): void {
-		// Unmount React component
-		if (this.reactMountManager) {
-			this.reactMountManager.unmount();
-			this.reactMountManager = null;
-		}
+  onload(): void {
+    // Stub for now
+  }
 
-		// Clean up hover popover
-		if (this.hoverPopover) {
-			this.hoverPopover.unload();
-			this.hoverPopover = null;
-		}
-	}
+  onunload(): void {
+    // Unmount React component
+    if (this.reactMountManager) {
+      this.reactMountManager.unmount();
+      this.reactMountManager = null;
+    }
 
-	onDataUpdated(): void {
-		if (!this.data) {
-			console.warn('[KanbanBasesView] onDataUpdated called but data is null');
-			return;
-		}
-		this.loadConfig();
-		this.render();
-	}
+    // Clean up hover popover
+    if (this.hoverPopover) {
+      this.hoverPopover.unload();
+      this.hoverPopover = null;
+    }
+  }
 
-	private render(): void {
-		if (!this.containerEl) {
-			console.warn('[KanbanBasesView] containerEl not initialized');
-			return;
-		}
+  onDataUpdated(): void {
+    if (!this.data) {
+      console.warn("[KanbanBasesView] onDataUpdated called but data is null");
+      return;
+    }
+    this.loadConfig();
+    this.render();
+  }
 
-		this.containerEl.empty();
+  private render(): void {
+    if (!this.containerEl) {
+      console.warn("[KanbanBasesView] containerEl not initialized");
+      return;
+    }
 
-		if (!this.config || !this.data) {
-			this.renderNoGroupingError();
-			return;
-		}
+    this.containerEl.empty();
 
-		if (!this.data.groupedData || this.data.groupedData.length === 0) {
-			this.renderEmptyState();
-			return;
-		}
+    if (!this.config || !this.data) {
+      this.renderNoGroupingError();
+      return;
+    }
 
-		try {
-			// Extract grouping field ID from the groupedData structure
-			// If not available from API, use first property as fallback (drag-drop support to be added later)
-			if ((this.data.groupedData as any).fieldId) {
-				this.groupByFieldId = (this.data.groupedData as any).fieldId;
-			} else if (this.data.properties && this.data.properties.length > 0) {
-				// Fallback: use first property ID for now
-				this.groupByFieldId = this.data.properties[0];
-				console.debug('[KanbanBasesView] Using first property as groupByFieldId:', this.groupByFieldId);
-			} else {
-				this.groupByFieldId = 'unknown';
-				console.warn('[KanbanBasesView] No properties available, using placeholder groupByFieldId');
-			}
+    if (!this.data.groupedData || this.data.groupedData.length === 0) {
+      this.renderEmptyState();
+      return;
+    }
 
-			// Mount React component to render kanban board
-			if (this.reactMountManager && this.groupByFieldId) {
-				this.reactMountManager.mount(
-					this.containerEl,
-					this.app,
-					this.queryController,
-					this.data,
-					this.groupByFieldId,
-					this.data.properties || []
-				);
-				console.debug('[KanbanBasesView] React component mounted successfully');
-			} else {
-				console.warn('[KanbanBasesView] Cannot mount React: missing manager');
-			}
-		} catch (error) {
-			console.error('[KanbanBasesView] Failed to render with React:', error);
-		}
-	}
+    try {
+      // Extract grouping field ID from the groupedData structure
+      // If not available from API, use first property as fallback (drag-drop support to be added later)
+      if ((this.data.groupedData as any).fieldId) {
+        this.groupByFieldId = (this.data.groupedData as any).fieldId;
+      } else if (this.data.properties && this.data.properties.length > 0) {
+        // Fallback: use first property ID for now
+        this.groupByFieldId = this.data.properties[0];
+        console.debug(
+          "[KanbanBasesView] Using first property as groupByFieldId:",
+          this.groupByFieldId,
+        );
+      } else {
+        this.groupByFieldId = "unknown";
+        console.warn(
+          "[KanbanBasesView] No properties available, using placeholder groupByFieldId",
+        );
+      }
 
-	private loadConfig(): void {
-		if (this.config) {
-			// Grouping config is no longer needed - it's handled by Obsidian's groupedData
-		}
-		this.loadColumnOrder();
-	}
+      // Mount React component to render kanban board
+      if (this.reactMountManager && this.groupByFieldId) {
+        this.reactMountManager.mount(
+          this.containerEl,
+          this.app,
+          this.queryController,
+          this.data,
+          this.groupByFieldId,
+          this.data.properties || [],
+        );
+        console.debug("[KanbanBasesView] React component mounted successfully");
+      } else {
+        console.warn("[KanbanBasesView] Cannot mount React: missing manager");
+      }
+    } catch (error) {
+      console.error("[KanbanBasesView] Failed to render with React:", error);
+    }
+  }
 
-	private _getColumnIdKey(): string {
-		// Key for storing column order/seen columns - using default as we don't have grouping config anymore
-		return 'default';
-	}
+  private loadConfig(): void {
+    if (this.config) {
+      // Grouping config is no longer needed - it's handled by Obsidian's groupedData
+    }
+    this.loadColumnOrder();
+  }
 
-	private renderNoGroupingError(): void {
-		if (!this.containerEl) {
-			console.error('[KanbanBasesView] Cannot render error: containerEl is null');
-			return;
-		}
-		const errorEl = this.containerEl.createDiv('kanban-error');
-		errorEl.createEl('p', {
-			text: 'No data available. Configure your Bases query to see items in the Kanban view.',
-			cls: 'kanban-error-message',
-		});
-	}
+  private _getColumnIdKey(): string {
+    // Key for storing column order/seen columns - using default as we don't have grouping config anymore
+    return "default";
+  }
 
-	private renderEmptyState(): void {
-		if (!this.containerEl) {
-			console.error('[KanbanBasesView] Cannot render empty state: containerEl is null');
-			return;
-		}
-		const emptyEl = this.containerEl.createDiv('kanban-empty');
-		emptyEl.createEl('p', {
-			text: 'No items to display. Add items to this Base to see them in the Kanban view.',
-			cls: 'kanban-empty-message',
-		});
-	}
+  private renderNoGroupingError(): void {
+    if (!this.containerEl) {
+      console.error(
+        "[KanbanBasesView] Cannot render error: containerEl is null",
+      );
+      return;
+    }
+    const errorEl = this.containerEl.createDiv("kanban-error");
+    errorEl.createEl("p", {
+      text: "No data available. Configure your Bases query to see items in the Kanban view.",
+      cls: "kanban-error-message",
+    });
+  }
 
-	private reorderColumnsRelative(sourceColumnId: string, targetColumnId: string, position: 'before' | 'after'): void {
-		const groupKey = this._getColumnIdKey();
-
-		// Get current column order for this grouping
-		let order = this.columnOrderMap.get(groupKey) || [];
-
-		const sourceIndex = order.indexOf(sourceColumnId);
-		const targetIndex = order.indexOf(targetColumnId);
-
-		if (sourceIndex === -1 || targetIndex === -1) return;
-
-		// Remove source from current position
-		const [moved] = order.splice(sourceIndex, 1);
-
-		// Insert at target position
-		const insertIndex = position === 'before' ? targetIndex : targetIndex + 1;
-		order.splice(insertIndex, 0, moved);
-
-		// Save new order
-		this.columnOrderMap.set(groupKey, order);
-		this.saveColumnOrder();
-
-		// Re-render with new order
-		this.render();
-	}
-
-	static getViewOptions(): ViewOption[] {
-		const output: ViewOption[] = [
-			{
-				type: 'text',
-				displayName: 'Column order',
-				key: 'kanban-columnNames',
-				default: 'Backlog,Todo,In Progress,In Review,Done',
-				placeholder: 'e.g., Backlog,Todo,In Progress,In Review,Done',
-			},
-		];
-		return output;
-	}
+  private renderEmptyState(): void {
+    if (!this.containerEl) {
+      console.error(
+        "[KanbanBasesView] Cannot render empty state: containerEl is null",
+      );
+      return;
+    }
+    const emptyEl = this.containerEl.createDiv("kanban-empty");
+    emptyEl.createEl("p", {
+      text: "No items to display. Add items to this Base to see them in the Kanban view.",
+      cls: "kanban-empty-message",
+    });
+  }
+  static getViewOptions(): ViewOption[] {
+    const output: ViewOption[] = [
+      {
+        type: "text",
+        displayName: "Column order",
+        key: "kanban-columnNames",
+        default: "Backlog,Todo,In Progress,In Review,Done",
+        placeholder: "e.g., Backlog,Todo,In Progress,In Review,Done",
+      },
+    ];
+    return output;
+  }
 }

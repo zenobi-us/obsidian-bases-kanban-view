@@ -4,13 +4,13 @@ A custom Obsidian Bases view that displays data in a **kanban board layout** wit
 
 ## Features
 
-✨ **Configurable Grouping** - Group items by any property  
-🎨 **Drag-Drop Cards** - Move cards between columns (visual feedback)  
-↔️ **Reorder Columns** - Drag column headers to reorganize  
-💾 **Persistent Layout** - Column order saved per grouping property  
-⚡ **Virtual Scrolling** - Smooth performance with 100+ items  
-🎯 **All Properties Displayed** - Shows all visible properties on cards  
-🛡️ **Robust Error Handling** - Helpful error messages and debug logging  
+✨ **Configurable Grouping** - Group items using standard Bases properties
+🎨 **Drag-Drop Cards** - Move cards between columns (visual feedback)
+↔️ **Reorder Columns** - Drag column headers to reorganize
+💾 **Persistent Layout** - Column order saved in base view settings
+⚡ **Virtual Scrolling** - Smooth performance with 100+ items
+🎯 **All Properties Displayed** - Shows all visible properties on cards
+🛡️ **Robust Error Handling** - Helpful error messages and debug logging
 
 ## Installation
 
@@ -23,6 +23,7 @@ mise run dev
 ```
 
 This will:
+
 1. Install dependencies (cached with bkt)
 2. Configure Obsidian vault path (if first time)
 3. Symlink plugin to vault
@@ -47,8 +48,8 @@ Then reload Obsidian (Cmd+R on Mac, Ctrl+R on Windows/Linux) to see changes.
 
 ### Configure Grouping
 
-1. Click the **view options** icon
-2. Select **"Group by"** property
+1. Click the **Sort** icon
+2. Add a **"Group by"** property
 3. Board updates automatically
 
 ### Drag-Drop Cards
@@ -62,7 +63,7 @@ Then reload Obsidian (Cmd+R on Mac, Ctrl+R on Windows/Linux) to see changes.
 
 - **Drag column headers** to reorder
 - Order is saved per grouping property
-- Persists across reloads
+- Persists in board settings across reloads
 
 ## Architecture
 
@@ -132,11 +133,13 @@ c83b5ef feat: implement KanbanBasesView with manual entry grouping
 ## Known Limitations
 
 ### TODO: Property Updates
+
 - Card drag-drop between columns shows UI feedback but doesn't persist changes yet
 - `updateEntryProperty()` method needs Obsidian/Bases API integration
 - Logs to console what would be updated
 
 ### Not Yet Implemented
+
 - Swimlanes (2D grouping)
 - Filter integration
 - Sorting options
@@ -177,6 +180,6 @@ MIT
 
 **Status:** ✅ MVP Complete - Ready for Testing
 
-**Build:** ✅ Clean (19 KB)  
-**Tests:** ✅ All 6 core features implemented  
+**Build:** ✅ Clean (19 KB)
+**Tests:** ✅ All 6 core features implemented
 **Installation:** ✅ Ready at `~/.obsidian/plugins/obsidian-kanban-bases/`
