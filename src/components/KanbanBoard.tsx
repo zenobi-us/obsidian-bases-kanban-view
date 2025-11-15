@@ -1,65 +1,57 @@
-import React from 'react';
-import { BasesPropertyId } from 'obsidian';
+import React from "react";
 import {
   DndContext,
   DragEndEvent,
   DragOverlay,
+  DragStartEvent,
   closestCorners,
-} from '@dnd-kit/core';
-import { useGrouping } from '../context/GroupingContext';
-import { Column } from './Column';
-import { Card } from './Card';
-import styles from './KanbanBoard.module.css';
+} from "@dnd-kit/core";
+import { useKanban } from "../context/KanbanContext";
+import { Column } from "./Column";
+import { Card } from "./Card";
+import styles from "./KanbanBoard.module.css";
+import { Notice } from "./Notice";
 
-/**
- * KanbanBoard component renders the main kanban board layout with dndkit support.
- * 
- * Architecture:
- * - DndContext wraps board to provide drag-drop system
- * - DragOverlay renders dragged card preview
- * - Column components use useDroppable to become drop targets
- * - Card components use useDraggable for drag capability
- * - On drop, moveCard handler updates Obsidian data
- * 
- * This is now a pure rendering component with no state management.
- * All data flows through context, ensuring automatic updates.
- * 
- * @param props - allProperties for rendering card fields
- * @returns React element rendering the kanban board with dndkit
- */
-export interface KanbanBoardProps {
-  allProperties: BasesPropertyId[];
-}
 
-export const KanbanBoard = ({
-  allProperties
-}: KanbanBoardProps): React.ReactElement => {
-  const { groups, error, loading, moveCard } = useGrouping();
+export const KanbanBoard = (): React.ReactElement => {
+  const kanban = useKanban();
 
   /**
    * Handle drag end event
    * Extract card ID and target column from event and trigger move
    */
   const handleDragEnd = async (event: DragEndEvent): Promise<void> => {
-    const { active, over } = event;
 
-    if (!over) {
-      console.debug('[KanbanBoard] Drop outside valid target, ignoring');
+    if (!event.over) {
+      console.debug("[KanbanBoard] Drop outside valid target, ignoring");
       return;
     }
 
-    const cardId = String(active.id);
-    const targetColumnId = String(over.id);
+    const cardId = String(event.active.id);
+    const targetColumnId = String(event.over.id);
 
     if (cardId && targetColumnId) {
       try {
-        console.debug('[KanbanBoard] Drag ended, moving card', { cardId, targetColumnId });
-        await moveCard(cardId, targetColumnId);
+        console.debug("[KanbanBoard] Drag ended, moving card", {
+          cardId,
+          targetColumnId,
+        });
+        await kanban.moveCard(cardId, targetColumnId);
       } catch (error) {
-        console.error('[KanbanBoard] Error moving card on drag end:', error);
+        console.error("[KanbanBoard] Error moving card on drag end:", error);
       }
     }
   };
+
+  const handleDragStart = (event: DragStartEvent): void => {
+    console.debug("[KanbanBoard] Drag started");
+
+    const cardId = String(event.active.id);
+    const sourceColumn = event.activatorEvent
+
+    console.log("[KanbanBoard] Drag started:", { cardId, sourceColumn });
+
+  }
 
   /**
    * Get dragged card for overlay preview
@@ -67,50 +59,40 @@ export const KanbanBoard = ({
   const getDraggedCard = (): React.ReactElement | null => {
     const draggedId = null; // Will be populated by useDndContext if needed
     if (!draggedId) return null;
-
-    for (const group of groups) {
-      const entry = group.entries.find(e => e.file.path === String(draggedId));
-      if (entry) {
-        return (
-          <Card
-            entry={entry}
-            allProperties={allProperties}
-          />
-        );
-      }
+    const entry = kanban.entries.get(draggedId);
+    if (!entry) {
+      console.warn("[KanbanBoard] Dragged entry not found for id:", draggedId);
+      return null
     }
-    return null;
+
+    return <Card entry={entry} />;
   };
 
-  if (error) {
+  if (kanban.error) {
     return (
-      <div className={styles.error}>
-        <p className={styles.errorMessage}>Error loading kanban board: {error.message}</p>
-      </div>
+      <Notice
+        tone="error"
+        message={`Error loading kanban board: ${kanban.error.message}`}
+      />
     );
   }
 
-  if (loading) {
+  if (kanban.loading) {
     return <div className={styles.loading}>Loading...</div>;
   }
 
   return (
-    <DndContext
-      collisionDetection={closestCorners}
-      onDragEnd={handleDragEnd}
-    >
+    <DndContext collisionDetection={closestCorners} onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
       <div className={styles.board}>
-        {groups.map((group) => (
-          <Column
-            key={group.id}
-            group={group}
-            allProperties={allProperties}
+        {kanban.columnOrder.map((order) => (
+          <Column key={order.key} label={order.label} group={kanban.columns.get(order.key)}
+          
           />
         ))}
       </div>
-      <DragOverlay>
-        {getDraggedCard()}
-      </DragOverlay>
+      <DragOverlay>{getDraggedCard()}</DragOverlay>
     </DndContext>
   );
 };
+
+

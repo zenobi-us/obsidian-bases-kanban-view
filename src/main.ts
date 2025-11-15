@@ -7,12 +7,6 @@ const KANBAN_VIEW_TYPE = 'kanban';
 export default class KanbanBasesViewPlugin extends Plugin {
 
 	async onload() {
-		// Inject global styles into document head
-		const styleEl = document.createElement('style');
-		styleEl.textContent = globalStyles;
-		styleEl.id = 'kanban-global-styles';
-		document.head.appendChild(styleEl);
-
 		this.registerBasesView(KANBAN_VIEW_TYPE, {
 			name: 'Kanban',
 			icon: 'layout-grid',

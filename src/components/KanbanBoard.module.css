@@ -7,7 +7,9 @@
 	overflow-x: auto;
 	overflow-y: hidden;
 	flex: 1;
-	align-items: start;
+	align-items: stretch;
+    justify-content: stretch;
+    height: 100%;
 }
 
 /* Error state */

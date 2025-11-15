@@ -3,7 +3,7 @@ import React from 'react';
 import { render } from '@testing-library/react';
 import { KanbanBoard } from '../components/KanbanBoard';
 import { AppProvider } from '../context/AppContext';
-import { GroupingProvider } from '../context/GroupingContext';
+import { GroupingProvider } from '../context/KanbanContext';
 import { QueryController } from 'obsidian';
 
 /**
