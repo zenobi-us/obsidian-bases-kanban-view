@@ -57,16 +57,14 @@ export const KanbanBoard = ({
 
   return (
     <div className="kanban-board">
-      <div className="kanban-columns">
-        {groups.map((group) => (
-          <Column
-            key={group.id}
-            group={group}
-            allProperties={allProperties}
-            onCardDrop={handleCardDrop}
-          />
-        ))}
-      </div>
+      {groups.map((group) => (
+        <Column
+          key={group.id}
+          group={group}
+          allProperties={allProperties}
+          onCardDrop={handleCardDrop}
+        />
+      ))}
     </div>
   );
 };
