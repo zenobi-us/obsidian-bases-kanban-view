@@ -227,6 +227,12 @@
 	background: hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.1);
 }
 
+.kanban-column--drop-target {
+	border: 2px dashed var(--text-accent);
+	background-color: rgba(var(--text-accent-rgb), 0.1);
+	transition: all 0.2s ease;
+}
+
 .kanban-column--drop-target-left {
 	border-left: var(--size-4-1) solid var(--text-accent);
 }
