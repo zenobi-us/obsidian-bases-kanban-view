@@ -1,0 +1,45 @@
+/* KanbanBoard container styles */
+.board {
+	display: flex;
+	flex-direction: row;
+	gap: var(--size-4-4);
+	padding: var(--size-4-4);
+	overflow-x: auto;
+	overflow-y: hidden;
+	flex: 1;
+	align-items: start;
+}
+
+/* Error state */
+.error {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: var(--text-muted);
+	padding: var(--size-4-5);
+	text-align: center;
+	background: rgba(var(--color-red-rgb), 0.02);
+}
+
+.errorMessage {
+	font-size: var(--font-ui-medium);
+	line-height: var(--line-height-normal);
+	max-width: 300px;
+	font-family: var(--font-interface-theme);
+	color: var(--text-error);
+	font-weight: var(--font-semibold);
+}
+
+/* Loading state */
+.loading {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	color: var(--text-muted);
+	font-size: var(--font-ui-medium);
+	font-family: var(--font-interface-theme);
+}

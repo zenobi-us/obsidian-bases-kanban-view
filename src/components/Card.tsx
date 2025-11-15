@@ -9,6 +9,7 @@ import {
   renderFieldValue,
   extractPropertyName
 } from '../utils/fieldRenderers';
+import styles from './Card.module.css';
 
 /**
  * Card component props
@@ -43,7 +44,6 @@ export const Card = ({
 
   const style = {
     transform: CSS.Translate.toString(transform),
-    opacity: isDragging && !isDragOverlay ? 0.5 : 1,
   };
 
   /**
@@ -60,9 +60,9 @@ export const Card = ({
       const fieldValue = renderFieldValue(value);
 
       return (
-        <div key={String(propertyId)} className="kanban-card-field">
-          <span className="kanban-field-label">{propName}:</span>
-          <span className="kanban-field-value">{fieldValue}</span>
+        <div key={String(propertyId)} className={styles.field}>
+          <span className={styles.fieldLabel}>{propName}:</span>
+          <span className={styles.fieldValue}>{fieldValue}</span>
         </div>
       );
     } catch (error) {
@@ -80,29 +80,29 @@ export const Card = ({
     <div
       ref={setNodeRef}
       style={style}
-      className={`kanban-card ${isDragging && !isDragOverlay ? 'kanban-card--dragging' : ''}`}
+      className={`${styles.card} ${isDragging && !isDragOverlay ? styles.dragging : ''} ${isDragOverlay ? styles.dragOverlay : ''}`}
       {...listeners}
       {...attributes}
       data-entry-path={entry.file.path}
     >
-      <div className="kanban-card-content">
+      <div className={styles.content}>
         {/* Tier 1: Critical fields */}
         {tier1Props.length > 0 && (
-          <div className="kanban-card-tier-1">
+          <div className={styles.tier1}>
             {tier1Props.map((propId) => renderField(propId))}
           </div>
         )}
 
         {/* Tier 2: Important context */}
         {tier2Props.length > 0 && (
-          <div className="kanban-card-tier-2">
+          <div className={styles.tier2}>
             {tier2Props.map((propId) => renderField(propId))}
           </div>
         )}
 
         {/* Tier 3: Additional details */}
         {tier3Props.length > 0 && (
-          <div className="kanban-card-tier-3">
+          <div className={styles.tier3}>
             {tier3Props.map((propId) => renderField(propId))}
           </div>
         )}

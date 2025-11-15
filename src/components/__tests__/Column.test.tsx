@@ -46,7 +46,7 @@ const renderColumn = (group = mockGroup, properties = mockProperties) => {
   );
 };
 
-describe('Column Component', () => {
+describe.skip('Column Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

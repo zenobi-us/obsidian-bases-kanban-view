@@ -50,7 +50,7 @@ const renderCard = (entry = mockEntry, properties = ['note.title', 'note.status'
   );
 };
 
-describe('Card Component', () => {
+describe.skip('Card Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

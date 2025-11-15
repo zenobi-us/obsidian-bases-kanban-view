@@ -1,0 +1,96 @@
+/* Card base styles */
+.card {
+	background: var(--background-primary);
+	border: var(--border-width) solid var(--divider-color);
+	border-radius: var(--radius-m);
+	padding: var(--size-4-3);
+	cursor: grab;
+	transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
+	flex-shrink: 0;
+	user-select: none;
+	touch-action: none;
+}
+
+.card:hover {
+	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.15);
+	transform: translateY(calc(var(--size-2-1) * -1));
+	background-color: var(--background-secondary);
+	cursor: pointer;
+}
+
+/* Card content container */
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-4-2);
+}
+
+/* Tier-based field rendering */
+.tier1,
+.tier2,
+.tier3 {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-1);
+	margin-bottom: var(--size-4-2);
+}
+
+/* Tier 1: Critical fields - most prominent */
+.tier1 {
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-medium);
+	color: var(--text-normal);
+}
+
+/* Tier 2: Important context - medium prominence */
+.tier2 {
+	font-size: var(--font-ui-small);
+	color: var(--text-normal);
+	opacity: 0.9;
+	border-top: var(--border-width) solid var(--divider-color);
+	padding-top: var(--size-2-1);
+}
+
+/* Tier 3: Additional details - least prominent */
+.tier3 {
+	font-size: var(--font-ui-small);
+	color: var(--text-muted);
+	opacity: 0.7;
+}
+
+/* Field container */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--size-2-1);
+}
+
+/* Field label */
+.fieldLabel {
+	color: var(--text-muted);
+	font-weight: var(--font-semibold);
+	font-size: var(--font-ui-small);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+/* Field value */
+.fieldValue {
+	color: var(--text-normal);
+	word-break: break-word;
+}
+
+/* Drag state */
+.dragging {
+	opacity: 0.5;
+	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.2);
+	transform: scale(1.02);
+	z-index: 9999;
+	position: relative;
+}
+
+/* Drag overlay styling */
+.dragOverlay {
+	filter: drop-shadow(0 0.5rem 1rem rgba(0, 0, 0, 0.3));
+	opacity: 0.9;
+}

@@ -9,6 +9,7 @@ import {
 import { useGrouping } from '../context/GroupingContext';
 import { Column } from './Column';
 import { Card } from './Card';
+import styles from './KanbanBoard.module.css';
 
 /**
  * KanbanBoard component renders the main kanban board layout with dndkit support.
@@ -83,14 +84,14 @@ export const KanbanBoard = ({
 
   if (error) {
     return (
-      <div className="kanban-error">
-        <p>Error loading kanban board: {error.message}</p>
+      <div className={styles.error}>
+        <p className={styles.errorMessage}>Error loading kanban board: {error.message}</p>
       </div>
     );
   }
 
   if (loading) {
-    return <div className="kanban-loading">Loading...</div>;
+    return <div className={styles.loading}>Loading...</div>;
   }
 
   return (
@@ -98,7 +99,7 @@ export const KanbanBoard = ({
       collisionDetection={closestCorners}
       onDragEnd={handleDragEnd}
     >
-      <div className="kanban-board">
+      <div className={styles.board}>
         {groups.map((group) => (
           <Column
             key={group.id}
