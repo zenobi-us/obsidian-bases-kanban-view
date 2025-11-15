@@ -1,7 +1,12 @@
-import React from 'react';
-import { Root, createRoot } from 'react-dom/client';
-import { App, BasesQueryResult, BasesPropertyId, QueryController } from 'obsidian';
-import { KanbanView } from '../components/KanbanView';
+import React from "react";
+import { Root, createRoot } from "react-dom/client";
+import {
+  App,
+  BasesQueryResult,
+  BasesPropertyId,
+  QueryController,
+} from "obsidian";
+import { KanbanView } from "../components/KanbanView";
 
 /**
  * Manages React root mounting and lifecycle
@@ -11,22 +16,32 @@ export class ReactMountManager {
   private container: HTMLElement | null = null;
 
   /**
-    * Mount React component into DOM
-    */
+   * Mount React component into DOM
+   * @param container - DOM element to mount into
+   * @param app - Obsidian App instance
+   * @param queryController - QueryController for accessing Obsidian data
+   * @param queryResult - Current query result (used when not fetching via useKanbanData)
+   * @param groupByPropertyId - Property ID to group cards by
+   * @param allProperties - All available properties for rendering
+   * @param baseId - Base ID for data fetching (optional, enables useKanbanData)
+   * @param queryId - Query ID for data fetching (optional, enables useKanbanData)
+   */
   public mount(
     container: HTMLElement,
     app: App,
     queryController: QueryController,
     queryResult: BasesQueryResult,
     groupByPropertyId: string | null,
-    allProperties: BasesPropertyId[]
+    allProperties: BasesPropertyId[],
+    baseId?: string,
+    queryId?: string,
   ): void {
     try {
       // Create new root if needed
       if (!this.root || this.container !== container) {
         this.container = container;
         this.root = createRoot(container);
-        console.debug('[ReactMountManager] Created new React root');
+        console.debug("[ReactMountManager] Created new React root");
       }
 
       // Render KanbanView component
@@ -37,12 +52,17 @@ export class ReactMountManager {
           queryResult={queryResult}
           groupByPropertyId={groupByPropertyId}
           allProperties={allProperties}
-        />
+          baseId={baseId}
+          queryId={queryId}
+        />,
       );
 
-      console.debug('[ReactMountManager] React component mounted successfully');
+      console.debug("[ReactMountManager] React component mounted successfully");
     } catch (error) {
-      console.error('[ReactMountManager] Error mounting React component:', error);
+      console.error(
+        "[ReactMountManager] Error mounting React component:",
+        error,
+      );
       throw error;
     }
   }
@@ -56,10 +76,15 @@ export class ReactMountManager {
         this.root.unmount();
         this.root = null;
         this.container = null;
-        console.debug('[ReactMountManager] React component unmounted successfully');
+        console.debug(
+          "[ReactMountManager] React component unmounted successfully",
+        );
       }
     } catch (error) {
-      console.error('[ReactMountManager] Error unmounting React component:', error);
+      console.error(
+        "[ReactMountManager] Error unmounting React component:",
+        error,
+      );
     }
   }
 

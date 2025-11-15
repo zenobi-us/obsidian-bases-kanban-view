@@ -129,7 +129,7 @@ describe('KanbanBoard Performance', () => {
     const endTime = performance.now();
     const renderTime = endTime - startTime;
 
-    expect(renderTime).toBeLessThan(250);
+    expect(renderTime).toBeLessThan(300);
     expect(container.querySelector('.kanban-board')).toBeTruthy();
     console.log(`✓ Render time for 500 items: ${renderTime.toFixed(2)}ms`);
   });

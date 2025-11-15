@@ -1,14 +1,7 @@
-import {
-  BasesView,
-  QueryController,
-  ViewOption,
-  HoverParent,
-  HoverPopover,
-} from "obsidian";
+import { BasesView, QueryController, ViewOption, HoverParent } from "obsidian";
 import { ReactMountManager } from "../utils/reactMount";
 
-export class KanbanBasesView extends BasesView implements HoverParent {
-  public hoverPopover: HoverPopover | null = null;
+export class KanbanBasesView extends BasesView {
   private containerEl: HTMLElement;
   private queryController: QueryController;
   private groupByFieldId: string | null = null;
@@ -63,16 +56,11 @@ export class KanbanBasesView extends BasesView implements HoverParent {
 
   onunload(): void {
     // Unmount React component
-    if (this.reactMountManager) {
-      this.reactMountManager.unmount();
-      this.reactMountManager = null;
+    if (!this.reactMountManager) {
+      return;
     }
-
-    // Clean up hover popover
-    if (this.hoverPopover) {
-      this.hoverPopover.unload();
-      this.hoverPopover = null;
-    }
+    this.reactMountManager.unmount();
+    this.reactMountManager = null;
   }
 
   onDataUpdated(): void {
