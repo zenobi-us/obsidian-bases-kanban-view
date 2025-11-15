@@ -3,35 +3,35 @@ import { render } from '@testing-library/react';
 import React from 'react';
 import { KanbanBoard } from '../KanbanBoard';
 import { AppContext } from '../../context/AppContext';
-import { BasesQueryResult, BasesPropertyId } from 'obsidian';
+import { GroupingProvider } from '../../context/GroupingContext';
+import { BasesPropertyId, QueryController } from 'obsidian';
+import { GroupedDataItem } from '../../types/components';
 
 // Mock data
-const mockQueryResult: BasesQueryResult & { groupedData?: any[] } = {
-  data: [],
-  properties: ['note.title', 'note.status'] as BasesPropertyId[],
-  groupedData: [
-    {
-      key: 'In Progress',
-      entries: [
-        {
-          id: 'entry-1',
-          file: { path: 'test/note1.md', name: 'note1' },
-          getValue: vi.fn(() => 'Value 1'),
-        },
-      ],
-    },
-    {
-      key: 'Done',
-      entries: [
-        {
-          id: 'entry-2',
-          file: { path: 'test/note2.md', name: 'note2' },
-          getValue: vi.fn(() => 'Value 2'),
-        },
-      ],
-    },
-  ],
-} as any;
+const mockGroupedData: GroupedDataItem[] = [
+  {
+    key: 'In Progress',
+    entries: [
+      {
+        id: 'entry-1',
+        file: { path: 'test/note1.md', name: 'note1' } as any,
+        getValue: vi.fn(() => 'Value 1'),
+      } as any,
+    ],
+  },
+  {
+    key: 'Done',
+    entries: [
+      {
+        id: 'entry-2',
+        file: { path: 'test/note2.md', name: 'note2' } as any,
+        getValue: vi.fn(() => 'Value 2'),
+      } as any,
+    ],
+  },
+];
+
+const mockProperties: BasesPropertyId[] = ['note.title', 'note.status'];
 
 const mockApp = {
   workspace: {
@@ -40,143 +40,68 @@ const mockApp = {
   renderContext: {} as any,
 } as any;
 
+const mockQueryController = {} as unknown as QueryController;
+
+const renderKanbanBoard = (
+  groupedData: GroupedDataItem[] = mockGroupedData,
+  properties: BasesPropertyId[] = mockProperties
+) => {
+  return render(
+    <AppContext.Provider value={mockApp}>
+      <GroupingProvider
+        queryController={mockQueryController}
+        groupByFieldId="note.status"
+        groupedData={groupedData}
+      >
+        <KanbanBoard allProperties={properties} />
+      </GroupingProvider>
+    </AppContext.Provider>
+  );
+};
+
 describe('KanbanBoard Component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   it('should render kanban board container', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={mockQueryResult}
-          groupByPropertyId="note.status"
-          allProperties={mockQueryResult.properties || []}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderKanbanBoard();
     expect(container.querySelector('.kanban-board')).toBeTruthy();
   });
 
   it('should render loading state when no data', () => {
-    const emptyResult = {
-      data: [],
-      properties: [],
-      groupedData: [],
-    } as any;
-
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={emptyResult}
-          groupByPropertyId="note.status"
-          allProperties={[]}
-        />
-      </AppContext.Provider>
-    );
-
-    // Should render without crashing
+    const { container } = renderKanbanBoard([], []);
     const board = container.querySelector('.kanban-board') || container.querySelector('.kanban-loading');
     expect(board).toBeTruthy();
   });
 
   it('should render columns for each group', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={mockQueryResult}
-          groupByPropertyId="note.status"
-          allProperties={mockQueryResult.properties || []}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderKanbanBoard();
     const columns = container.querySelectorAll('.kanban-column');
-    expect(columns.length).toBeGreaterThanOrEqual(0);
+    expect(columns.length).toBeGreaterThanOrEqual(2);
   });
 
   it('should pass data correctly to child components', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={mockQueryResult}
-          groupByPropertyId="note.status"
-          allProperties={mockQueryResult.properties || []}
-        />
-      </AppContext.Provider>
-    );
-
-    // Verify board renders
+    const { container } = renderKanbanBoard();
     const board = container.querySelector('.kanban-board');
     expect(board).toBeTruthy();
   });
 
   it('should handle error state gracefully', () => {
-    const errorResult = {
-      data: null,
-      properties: [],
-      groupedData: null,
-    } as any;
-
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={errorResult}
-          groupByPropertyId="note.status"
-          allProperties={[]}
-        />
-      </AppContext.Provider>
-    );
-
-    // Should render error or empty state without crashing
-    expect(container.querySelector('.kanban-error') || container.querySelector('.kanban-board')).toBeTruthy();
+    const { container } = renderKanbanBoard([], []);
+    const errorOrBoard = container.querySelector('.kanban-error') || container.querySelector('.kanban-board');
+    expect(errorOrBoard).toBeTruthy();
   });
 
-  it('should update when groupByPropertyId changes', () => {
-    const { rerender, container } = render(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={mockQueryResult}
-          groupByPropertyId="note.status"
-          allProperties={mockQueryResult.properties || []}
-        />
-      </AppContext.Provider>
-    );
-
-    const initialBoard = container.querySelector('.kanban-board');
-    expect(initialBoard).toBeTruthy();
-
-    // Re-render with different grouping
-    rerender(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={mockQueryResult}
-          groupByPropertyId="note.title"
-          allProperties={mockQueryResult.properties || []}
-        />
-      </AppContext.Provider>
-    );
-
-    const updatedBoard = container.querySelector('.kanban-board');
-    expect(updatedBoard).toBeTruthy();
+  it('should render with data', () => {
+    const { container } = renderKanbanBoard();
+    expect(container.querySelector('.kanban-board')).toBeTruthy();
+    expect(container.querySelector('.kanban-column')).toBeTruthy();
   });
 
-  it('should handle drag and drop callback', () => {
-    const handleCardDrop = vi.fn();
-    
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <KanbanBoard
-          queryResult={mockQueryResult}
-          groupByPropertyId="note.status"
-          allProperties={mockQueryResult.properties || []}
-        />
-      </AppContext.Provider>
-    );
-
-    // Verify board is ready for drop events
-    const board = container.querySelector('.kanban-board');
-    expect(board).toBeTruthy();
+  it('should display column count', () => {
+    const { container } = renderKanbanBoard();
+    const columnCounts = container.querySelectorAll('.kanban-column-count');
+    expect(columnCounts.length).toBeGreaterThan(0);
   });
 });

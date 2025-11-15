@@ -3,7 +3,8 @@ import { render } from '@testing-library/react';
 import React from 'react';
 import { Column } from '../Column';
 import { AppContext } from '../../context/AppContext';
-import { BasesEntry, BasesPropertyId } from 'obsidian';
+import { GroupingProvider } from '../../context/GroupingContext';
+import { BasesEntry, BasesPropertyId, QueryController } from 'obsidian';
 
 const mockGroup = {
   id: 'in-progress',
@@ -25,7 +26,24 @@ const mockApp = {
 } as any;
 
 const mockProperties = ['note.title', 'note.status'] as BasesPropertyId[];
-const mockOnCardDrop = vi.fn();
+const mockQueryController = {} as unknown as QueryController;
+
+const renderColumn = (group = mockGroup, properties = mockProperties) => {
+  return render(
+    <AppContext.Provider value={mockApp}>
+      <GroupingProvider
+        queryController={mockQueryController}
+        groupByFieldId="note.status"
+        groupedData={[]}
+      >
+        <Column
+          group={group}
+          allProperties={properties}
+        />
+      </GroupingProvider>
+    </AppContext.Provider>
+  );
+};
 
 describe('Column Component', () => {
   beforeEach(() => {
@@ -33,45 +51,18 @@ describe('Column Component', () => {
   });
 
   it('should render column container', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Column
-          group={mockGroup}
-          allProperties={mockProperties}
-          onCardDrop={mockOnCardDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderColumn();
     expect(container.querySelector('.kanban-column')).toBeTruthy();
   });
 
   it('should display column label', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Column
-          group={mockGroup}
-          allProperties={mockProperties}
-          onCardDrop={mockOnCardDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderColumn();
     const header = container.querySelector('.kanban-column-title');
     expect(header?.textContent).toBe('In Progress');
   });
 
   it('should display entry count', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Column
-          group={mockGroup}
-          allProperties={mockProperties}
-          onCardDrop={mockOnCardDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderColumn();
     const count = container.querySelector('.kanban-column-count');
     expect(count?.textContent).toBe('1');
   });
@@ -86,16 +77,7 @@ describe('Column Component', () => {
       ],
     };
 
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Column
-          group={multipleGroup}
-          allProperties={mockProperties}
-          onCardDrop={mockOnCardDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderColumn(multipleGroup);
     const count = container.querySelector('.kanban-column-count');
     expect(count?.textContent).toBe('3');
   });
@@ -106,46 +88,19 @@ describe('Column Component', () => {
       entries: [],
     };
 
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Column
-          group={emptyGroup}
-          allProperties={mockProperties}
-          onCardDrop={mockOnCardDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderColumn(emptyGroup);
     const count = container.querySelector('.kanban-column-count');
     expect(count?.textContent).toBe('0');
   });
 
   it('should handle drag over events', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Column
-          group={mockGroup}
-          allProperties={mockProperties}
-          onCardDrop={mockOnCardDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderColumn();
     const column = container.querySelector('.kanban-column');
     expect(column).toBeTruthy();
   });
 
   it('should accept drops in cards container', () => {
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Column
-          group={mockGroup}
-          allProperties={mockProperties}
-          onCardDrop={mockOnCardDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderColumn();
     const cardsContainer = container.querySelector('.kanban-cards-container');
     expect(cardsContainer).toBeTruthy();
   });

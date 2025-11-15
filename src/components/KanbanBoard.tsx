@@ -1,53 +1,26 @@
-import React, { useState, useMemo } from 'react';
-import { KanbanGroup, KanbanBoardProps } from '../types/components';
+import React from 'react';
+import { BasesPropertyId } from 'obsidian';
+import { useGrouping } from '../context/GroupingContext';
 import { Column } from './Column';
 
 /**
  * KanbanBoard component renders the main kanban board layout.
- * Groups entries by the specified property and renders columns.
+ * Gets groups and handlers from GroupingContext, rendering pure columns.
  * 
- * @param props - KanbanBoardProps containing queryResult, groupByPropertyId, and allProperties
+ * This is now a pure rendering component with no state management.
+ * All data flows through context, ensuring automatic updates.
+ * 
+ * @param props - allProperties for rendering card fields
  * @returns React element rendering the kanban board
  */
+export interface KanbanBoardProps {
+  allProperties: BasesPropertyId[];
+}
+
 export const KanbanBoard = ({
-  queryResult,
-  groupByPropertyId,
   allProperties
 }: KanbanBoardProps): React.ReactElement => {
-  const [loading] = useState(false);
-  const [error] = useState<Error | null>(null);
-
-  /**
-   * Convert Obsidian groupedData to KanbanGroup array
-   */
-  const groups = useMemo((): KanbanGroup[] => {
-    if (!queryResult || !queryResult.groupedData || queryResult.groupedData.length === 0) {
-      return [];
-    }
-
-    // Convert grouped data to KanbanGroup objects
-    const result: KanbanGroup[] = queryResult.groupedData.map((group) => ({
-      id: group.key === null || group.key === undefined ? 'Backlog' : String(group.key),
-      label: group.key === null || group.key === undefined ? 'Backlog' : String(group.key),
-      entries: group.entries || []
-    }));
-
-    return result;
-  }, [queryResult]);
-
-  /**
-   * Handle card drop onto a column
-   */
-  const handleCardDrop = async (cardId: string, targetGroupId: string): Promise<void> => {
-    // Find source group from current groups
-    const sourceGroup = groups.find((g) =>
-      g.entries.some((entry) => entry.file.path === cardId)
-    );
-    const sourceGroupId = sourceGroup?.id || 'unknown';
-    
-    console.debug('[KanbanBoard] Card dropped:', { cardId, sourceGroupId, targetGroupId });
-    // TODO: Implement property update in story 4.5.6
-  };
+  const { groups, error, loading } = useGrouping();
 
   if (error) {
     return (
@@ -68,7 +41,6 @@ export const KanbanBoard = ({
           key={group.id}
           group={group}
           allProperties={allProperties}
-          onCardDrop={handleCardDrop}
         />
       ))}
     </div>

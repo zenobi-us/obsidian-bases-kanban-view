@@ -14,8 +14,6 @@ import {
 export interface CardProps {
   entry: BasesEntry;
   allProperties: BasesPropertyId[];
-  sourceGroupId: string;
-  onCardDrop: (cardId: string, targetGroupId: string) => Promise<void>;
 }
 
 /**
@@ -25,26 +23,26 @@ export interface CardProps {
  * Tier 2: Important context (effort, progress, description)
  * Tier 3: Additional details (tags, custom fields, timestamps)
  * 
- * @param props - CardProps with entry, allProperties, and onCardDrop handler
+ * This is now a pure rendering component with no handler props.
+ * Drag events are handled purely for UI feedback and data transfer.
+ * 
+ * @param props - CardProps with entry and allProperties
  * @returns React element rendering the card
  */
 export const Card = ({
   entry,
-  allProperties,
-  sourceGroupId,
-  onCardDrop
+  allProperties
 }: CardProps): React.ReactElement => {
   /**
-   * Handle drag start event - set card path and source column as drag data
+   * Handle drag start event - set card path as drag data
    */
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('cardId', entry.file.path);
-    e.dataTransfer.setData('sourceGroupId', sourceGroupId);
     
     // Add visual feedback
     (e.currentTarget as HTMLDivElement).classList.add('kanban-card--dragging');
-    console.debug('[Card] Drag started', { cardId: entry.file.path, sourceGroupId });
+    console.debug('[Card] Drag started', { cardId: entry.file.path });
   };
 
   /**

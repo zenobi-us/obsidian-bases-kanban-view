@@ -3,7 +3,8 @@ import { render, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { Card } from '../Card';
 import { AppContext } from '../../context/AppContext';
-import { BasesEntry, BasesPropertyId } from 'obsidian';
+import { GroupingProvider } from '../../context/GroupingContext';
+import { BasesPropertyId, QueryController } from 'obsidian';
 
 // Mock entry data
 const mockEntry = {
@@ -20,7 +21,7 @@ const mockEntry = {
     };
     return values[propertyId];
   }),
-} as any as BasesEntry;
+} as any;
 
 const mockApp = {
   workspace: {
@@ -29,7 +30,24 @@ const mockApp = {
   renderContext: {} as any,
 } as any;
 
-const mockOnDrop = vi.fn();
+const mockQueryController = {} as unknown as QueryController;
+
+const renderCard = (entry = mockEntry, properties = ['note.title', 'note.status', 'note.priority'] as BasesPropertyId[]) => {
+  return render(
+    <AppContext.Provider value={mockApp}>
+      <GroupingProvider
+        queryController={mockQueryController}
+        groupByFieldId="note.status"
+        groupedData={[]}
+      >
+        <Card
+          entry={entry}
+          allProperties={properties}
+        />
+      </GroupingProvider>
+    </AppContext.Provider>
+  );
+};
 
 describe('Card Component', () => {
   beforeEach(() => {
@@ -37,33 +55,13 @@ describe('Card Component', () => {
   });
 
   it('should render card with entry data', () => {
-    const mockProperties = ['note.title', 'note.status', 'note.priority'] as BasesPropertyId[];
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Card
-          entry={mockEntry}
-          allProperties={mockProperties}
-          onCardDrop={mockOnDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderCard();
     const card = container.querySelector('.kanban-card');
     expect(card).toBeTruthy();
   });
 
   it('should handle drag start event', () => {
-    const mockProperties = ['note.title', 'note.status'] as BasesPropertyId[];
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Card
-          entry={mockEntry}
-          allProperties={mockProperties}
-          onCardDrop={mockOnDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderCard();
     const card = container.querySelector('[draggable="true"]');
     expect(card).toBeTruthy();
 
@@ -89,37 +87,15 @@ describe('Card Component', () => {
       }),
     };
 
-    const mockProperties = ['note.title', 'note.status', 'note.priority'] as BasesPropertyId[];
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Card
-          entry={entryWithFields}
-          allProperties={mockProperties}
-          onCardDrop={mockOnDrop}
-        />
-      </AppContext.Provider>
-    );
-
-    // Card should render with the provided entry
+    const { container } = renderCard(entryWithFields);
     expect(container.querySelector('.kanban-card')).toBeTruthy();
   });
 
   it('should apply dragging class when drag event occurs', () => {
-    const mockProperties = ['note.title'] as BasesPropertyId[];
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Card
-          entry={mockEntry}
-          allProperties={mockProperties}
-          onCardDrop={mockOnDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderCard();
     const card = container.querySelector('.kanban-card') as HTMLElement;
     expect(card).toBeTruthy();
     
-    // Simulate drag start using React's fireEvent
     if (card) {
       fireEvent.dragStart(card, {
         dataTransfer: {
@@ -127,7 +103,6 @@ describe('Card Component', () => {
           setData: vi.fn(),
         },
       });
-      // The class should be added during drag start
       expect(card.classList.contains('kanban-card--dragging') || card.hasAttribute('draggable')).toBeTruthy();
     }
   });
@@ -145,33 +120,12 @@ describe('Card Component', () => {
       }),
     };
 
-    const mockProperties = ['note.title', 'note.status', 'note.priority'] as BasesPropertyId[];
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Card
-          entry={entryWithNullValues}
-          allProperties={mockProperties}
-          onCardDrop={mockOnDrop}
-        />
-      </AppContext.Provider>
-    );
-
-    // Should render without crashing
+    const { container } = renderCard(entryWithNullValues);
     expect(container.querySelector('.kanban-card')).toBeTruthy();
   });
 
   it('should have correct data attributes for identification', () => {
-    const mockProperties = ['note.title'] as BasesPropertyId[];
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Card
-          entry={mockEntry}
-          allProperties={mockProperties}
-          onCardDrop={mockOnDrop}
-        />
-      </AppContext.Provider>
-    );
-
+    const { container } = renderCard();
     const card = container.querySelector('.kanban-card');
     expect(card?.getAttribute('data-entry-path')).toBe('test/note.md');
   });
@@ -190,17 +144,7 @@ describe('Card Component', () => {
     };
 
     const mockProperties = ['note.prop1', 'note.prop2', 'note.prop3'] as BasesPropertyId[];
-    const { container } = render(
-      <AppContext.Provider value={mockApp}>
-        <Card
-          entry={entryWithMultipleFields}
-          allProperties={mockProperties}
-          onCardDrop={mockOnDrop}
-        />
-      </AppContext.Provider>
-    );
-
-    // All properties should be rendered
+    const { container } = renderCard(entryWithMultipleFields, mockProperties);
     const card = container.querySelector('.kanban-card');
     expect(card).toBeTruthy();
   });

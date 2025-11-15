@@ -1,6 +1,7 @@
 import React from 'react';
 import { KanbanGroup } from '../types/components';
 import { BasesPropertyId } from 'obsidian';
+import { useGrouping } from '../context/GroupingContext';
 import { Card } from './Card';
 
 /**
@@ -9,20 +10,24 @@ import { Card } from './Card';
 export interface ColumnProps {
   group: KanbanGroup;
   allProperties: BasesPropertyId[];
-  onCardDrop: (cardId: string, targetGroupId: string) => Promise<void>;
 }
 
 /**
  * Column renders a single kanban column with cards
+ * Gets moveCard handler from GroupingContext, rendering pure cards.
  * 
- * @param props - ColumnProps with group, allProperties, and onCardDrop handler
+ * This is now a pure rendering component with no state or handler props.
+ * All data flows through context, ensuring consistent behavior.
+ * 
+ * @param props - ColumnProps with group and allProperties
  * @returns React element rendering the column
  */
 export const Column = ({
   group,
-  allProperties,
-  onCardDrop
+  allProperties
 }: ColumnProps): React.ReactElement => {
+  const { moveCard } = useGrouping();
+
   /**
    * Handle drag over event - show drop target visual
    */
@@ -41,7 +46,7 @@ export const Column = ({
   };
 
   /**
-   * Handle drop event - trigger card move
+   * Handle drop event - trigger card move via context handler
    */
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>): Promise<void> => {
     e.preventDefault();
@@ -49,10 +54,9 @@ export const Column = ({
 
     try {
       const cardId = e.dataTransfer.getData('cardId');
-      const sourceGroupId = e.dataTransfer.getData('sourceGroupId');
       if (cardId) {
-        console.debug('[Column] Card dropped', { cardId, sourceGroupId, targetColumnId: group.id });
-        await onCardDrop(cardId, group.id);
+        console.debug('[Column] Card dropped', { cardId, targetColumnId: group.id });
+        await moveCard(cardId, group.id);
       }
     } catch (error) {
       console.error('[Column] Error handling drop:', error);
@@ -78,8 +82,6 @@ export const Column = ({
             key={entry.file.path}
             entry={entry}
             allProperties={allProperties}
-            sourceGroupId={group.id}
-            onCardDrop={onCardDrop}
           />
         ))}
       </div>
