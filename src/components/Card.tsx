@@ -1,5 +1,7 @@
 import React from 'react';
 import { BasesEntry, BasesPropertyId } from 'obsidian';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import {
   getTier1Properties,
   getTier2Properties,
@@ -14,6 +16,7 @@ import {
 export interface CardProps {
   entry: BasesEntry;
   allProperties: BasesPropertyId[];
+  isDragOverlay?: boolean;
 }
 
 /**
@@ -23,34 +26,24 @@ export interface CardProps {
  * Tier 2: Important context (effort, progress, description)
  * Tier 3: Additional details (tags, custom fields, timestamps)
  * 
- * This is now a pure rendering component with no handler props.
- * Drag events are handled purely for UI feedback and data transfer.
+ * Uses dndkit's useDraggable hook for drag functionality.
+ * Components are pure rendering with dndkit handling all drag logic.
  * 
  * @param props - CardProps with entry and allProperties
  * @returns React element rendering the card
  */
 export const Card = ({
   entry,
-  allProperties
+  allProperties,
+  isDragOverlay = false
 }: CardProps): React.ReactElement => {
-  /**
-   * Handle drag start event - set card path as drag data
-   */
-  const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('cardId', entry.file.path);
-    
-    // Add visual feedback
-    (e.currentTarget as HTMLDivElement).classList.add('kanban-card--dragging');
-    console.debug('[Card] Drag started', { cardId: entry.file.path });
-  };
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: entry.file.path,
+  });
 
-  /**
-   * Handle drag end event - remove visual feedback
-   */
-  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>): void => {
-    (e.currentTarget as HTMLDivElement).classList.remove('kanban-card--dragging');
-    console.debug('[Card] Drag ended', { cardId: entry.file.path });
+  const style = {
+    transform: CSS.Translate.toString(transform),
+    opacity: isDragging && !isDragOverlay ? 0.5 : 1,
   };
 
   /**
@@ -85,10 +78,11 @@ export const Card = ({
 
   return (
     <div
-      className="kanban-card"
-      draggable
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
+      ref={setNodeRef}
+      style={style}
+      className={`kanban-card ${isDragging && !isDragOverlay ? 'kanban-card--dragging' : ''}`}
+      {...listeners}
+      {...attributes}
       data-entry-path={entry.file.path}
     >
       <div className="kanban-card-content">
