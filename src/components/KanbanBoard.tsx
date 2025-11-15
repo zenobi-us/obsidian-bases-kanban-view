@@ -39,7 +39,13 @@ export const KanbanBoard = ({
    * Handle card drop onto a column
    */
   const handleCardDrop = async (cardId: string, targetGroupId: string): Promise<void> => {
-    console.debug('[KanbanBoard] Card dropped:', { cardId, targetGroupId });
+    // Find source group from current groups
+    const sourceGroup = groups.find((g) =>
+      g.entries.some((entry) => entry.file.path === cardId)
+    );
+    const sourceGroupId = sourceGroup?.id || 'unknown';
+    
+    console.debug('[KanbanBoard] Card dropped:', { cardId, sourceGroupId, targetGroupId });
     // TODO: Implement property update in story 4.5.6
   };
 

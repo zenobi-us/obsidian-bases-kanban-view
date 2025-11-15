@@ -49,8 +49,9 @@ export const Column = ({
 
     try {
       const cardId = e.dataTransfer.getData('cardId');
+      const sourceGroupId = e.dataTransfer.getData('sourceGroupId');
       if (cardId) {
-        console.debug('[Column] Card dropped', { cardId, targetColumnId: group.id });
+        console.debug('[Column] Card dropped', { cardId, sourceGroupId, targetColumnId: group.id });
         await onCardDrop(cardId, group.id);
       }
     } catch (error) {
@@ -77,6 +78,7 @@ export const Column = ({
             key={entry.file.path}
             entry={entry}
             allProperties={allProperties}
+            sourceGroupId={group.id}
             onCardDrop={onCardDrop}
           />
         ))}

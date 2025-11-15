@@ -14,6 +14,7 @@ import {
 export interface CardProps {
   entry: BasesEntry;
   allProperties: BasesPropertyId[];
+  sourceGroupId: string;
   onCardDrop: (cardId: string, targetGroupId: string) => Promise<void>;
 }
 
@@ -30,18 +31,20 @@ export interface CardProps {
 export const Card = ({
   entry,
   allProperties,
+  sourceGroupId,
   onCardDrop
 }: CardProps): React.ReactElement => {
   /**
-   * Handle drag start event - set card path as drag data
+   * Handle drag start event - set card path and source column as drag data
    */
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>): void => {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('cardId', entry.file.path);
+    e.dataTransfer.setData('sourceGroupId', sourceGroupId);
     
     // Add visual feedback
     (e.currentTarget as HTMLDivElement).classList.add('kanban-card--dragging');
-    console.debug('[Card] Drag started', { cardId: entry.file.path });
+    console.debug('[Card] Drag started', { cardId: entry.file.path, sourceGroupId });
   };
 
   /**
