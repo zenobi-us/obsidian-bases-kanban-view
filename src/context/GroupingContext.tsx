@@ -131,47 +131,55 @@ export const GroupingProvider = ({
            return;
          }
 
-         console.debug("[GroupingContext] Moving card:", {
-           cardId,
-           from: sourceGroup.id,
-           to: targetGroupId,
-           groupByFieldId,
-         });
+          console.debug("[GroupingContext] Moving card:", {
+            cardId,
+            from: sourceGroup.id,
+            to: targetGroupId,
+            groupByFieldId,
+          });
 
-         // Update entry property via Obsidian API
-         // targetGroupId is the property value to set (e.g., "Done", "In Progress")
-         if (!groupByFieldId) {
-           console.warn(
-             "[GroupingContext] Cannot move card: groupByFieldId not set",
-           );
-           return;
-         }
+          // Update entry property via Obsidian API
+          // targetGroupId is the property value to set (e.g., "Done", "In Progress")
+          if (!groupByFieldId) {
+            console.warn(
+              "[GroupingContext] Cannot move card: groupByFieldId not set",
+            );
+            return;
+          }
 
-         // Get the file from the entry
-         const file = entry.file;
-         if (!file) {
-           console.error("[GroupingContext] Entry has no file:", cardId);
-           return;
-         }
+          // Get the file from the entry
+          const file = entry.file;
+          if (!file) {
+            console.error("[GroupingContext] Entry has no file:", cardId);
+            return;
+          }
 
-         // Update the entry's property value in the file's frontmatter
-         await app.fileManager.processFrontMatter(
-           file,
-           (frontmatter: any) => {
-             // Convert targetGroupId to the actual property value
-             // If targetGroupId is "Backlog" (null group), set to null
-             if (targetGroupId === "Backlog") {
-               frontmatter[groupByFieldId] = null;
-             } else {
-               frontmatter[groupByFieldId] = targetGroupId;
-             }
-             console.debug("[GroupingContext] Updated frontmatter:", {
-               cardId,
-               property: groupByFieldId,
-               value: frontmatter[groupByFieldId],
-             });
-           },
-         );
+          // Extract field name from BasesPropertyId (format: "type.fieldName")
+          // Frontmatter keys use only the field name, not the type prefix
+          const fieldNameParts = String(groupByFieldId).split('.');
+          const frontmatterKey = fieldNameParts.length > 1 
+            ? fieldNameParts.slice(1).join('.')
+            : groupByFieldId;
+
+          // Update the entry's property value in the file's frontmatter
+          await app.fileManager.processFrontMatter(
+            file,
+            (frontmatter: any) => {
+              // Convert targetGroupId to the actual property value
+              // If targetGroupId is "Backlog" (null group), set to null
+              if (targetGroupId === "Backlog") {
+                frontmatter[frontmatterKey] = null;
+              } else {
+                frontmatter[frontmatterKey] = targetGroupId;
+              }
+              console.debug("[GroupingContext] Updated frontmatter:", {
+                cardId,
+                propertyId: groupByFieldId,
+                frontmatterKey,
+                value: frontmatter[frontmatterKey],
+              });
+            },
+          );
 
          console.debug("[GroupingContext] Card moved successfully:", {
            cardId,
