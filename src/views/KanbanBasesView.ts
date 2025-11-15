@@ -1,6 +1,6 @@
 import { BasesView, QueryController, ViewOption, HoverParent } from "obsidian";
 import { ReactMountManager } from "../utils/reactMount";
-import globalStyles from '../styles/global.css?raw';
+import globalStyles from "../styles/global.css?raw";
 
 export class KanbanBasesView extends BasesView {
   private containerEl: HTMLElement;
@@ -11,10 +11,12 @@ export class KanbanBasesView extends BasesView {
 
   readonly type = "kanban";
 
-  constructor(controller: QueryController, scrollEl: HTMLElement) {
+  constructor(controller: QueryController, element: HTMLElement) {
     super(controller);
     this.queryController = controller;
-    this.containerEl = scrollEl.createDiv("kanban-bases-view-container");
+    // Use provided element directly instead of creating a wrapper
+    this.containerEl = element;
+    this.containerEl.classList.add("kanban-bases-view-container");
     this.reactMountManager = new ReactMountManager();
   }
 
@@ -92,26 +94,26 @@ export class KanbanBasesView extends BasesView {
     }
 
     // Inject global CSS styles once
-    if (!document.getElementById('kanban-global-styles')) {
-      const styleEl = document.createElement('style');
-      styleEl.id = 'kanban-global-styles';
+    if (!document.getElementById("kanban-global-styles")) {
+      const styleEl = document.createElement("style");
+      styleEl.id = "kanban-global-styles";
       styleEl.textContent = globalStyles;
       document.head.appendChild(styleEl);
-      console.debug('[KanbanBasesView] Global styles injected');
+      console.debug("[KanbanBasesView] Global styles injected");
     }
 
     try {
-       // Extract grouping field ID from the groupedData structure
-       // If not available from API, use first property as fallback (drag-drop support to be added later)
-       if ((this.data.groupedData as any).fieldId) {
-         this.groupByFieldId = (this.data.groupedData as any).fieldId;
-       } else if (this.data.properties && this.data.properties.length > 0) {
-         // Fallback: use first property ID for now
-         this.groupByFieldId = this.data.properties[0];
-         console.debug(
-           "[KanbanBasesView] Using first property as groupByFieldId:",
-           this.groupByFieldId,
-         );
+      // Extract grouping field ID from the groupedData structure
+      // If not available from API, use first property as fallback (drag-drop support to be added later)
+      if ((this.data.groupedData as any).fieldId) {
+        this.groupByFieldId = (this.data.groupedData as any).fieldId;
+      } else if (this.data.properties && this.data.properties.length > 0) {
+        // Fallback: use first property ID for now
+        this.groupByFieldId = this.data.properties[0];
+        console.debug(
+          "[KanbanBasesView] Using first property as groupByFieldId:",
+          this.groupByFieldId,
+        );
       } else {
         this.groupByFieldId = "unknown";
         console.warn(
