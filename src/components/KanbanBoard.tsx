@@ -50,48 +50,68 @@ function useDraggedEntry (entries: Map<string, BasesEntry>) {
 
 const useDragAndDropKanban = () => {
 
-  const kanban = useKanban();
-  const dragged = useDraggedEntry(kanban.entries);
+   const kanban = useKanban();
+   const dragged = useDraggedEntry(kanban.entries);
 
-  /**
-   * Handle drag end event
-   * Extract card ID and target column from event and trigger move
-   */
-  const onDragEnd = async (event: DragEndEvent): Promise<void> => {
+   /**
+    * Handle drag end event
+    * Extract card ID and target column from event and trigger move
+    */
+   const onDragEnd = React.useCallback(async (event: DragEndEvent): Promise<void> => {
+     console.debug("[KanbanBoard] onDragEnd event received", {
+       activeId: event.active?.id,
+       overId: event.over?.id,
+       hasOver: !!event.over,
+     });
 
-    if (!event.over) {
-      console.debug("[KanbanBoard] Drop outside valid target, ignoring");
-      return;
-    }
+     if (!event.over) {
+       console.debug("[KanbanBoard] Drop outside valid target, ignoring");
+       dragged.onDragEnd();
+       return;
+     }
 
-    const cardId = String(event.active.id);
-    const targetColumnId = String(event.over.id);
+     const cardId = String(event.active.id);
+     const targetColumnId = String(event.over.id);
 
-    if (cardId && targetColumnId) {
-      try {
-        console.debug("[KanbanBoard] Drag ended, moving card", {
-          cardId,
-          targetColumnId,
-        });
-        await kanban.moveCard(cardId, targetColumnId);
-      } catch (error) {
-        console.error("[KanbanBoard] Error moving card on drag end:", error);
-      }
-    }
+     console.debug("[KanbanBoard] Processing drag end", {
+       cardId,
+       targetColumnId,
+       hasMoveCard: !!kanban.moveCard,
+     });
 
-    dragged.onDragEnd();
-  };
+     if (cardId && targetColumnId && kanban.moveCard) {
+       try {
+         console.debug("[KanbanBoard] Calling moveCard with", {
+           cardId,
+           targetColumnId,
+         });
+         await kanban.moveCard(cardId, targetColumnId);
+         console.debug("[KanbanBoard] moveCard completed successfully");
+       } catch (error) {
+         console.error("[KanbanBoard] Error moving card on drag end:", error);
+       }
+     } else {
+       console.warn("[KanbanBoard] Missing required parameters for moveCard", {
+         cardId,
+         targetColumnId,
+         hasMoveCard: !!kanban.moveCard,
+       });
+     }
 
-  const onDragStart = (event: DragStartEvent): void => {
-    const cardId = String(event.active.id);
-    dragged.onDragStart(cardId);
-  }
+     dragged.onDragEnd();
+   }, [kanban.moveCard, dragged]);
 
-  return {
-    onDragEnd,
-    onDragStart,
-    entry: dragged.entry,
-  };
+   const onDragStart = React.useCallback((event: DragStartEvent): void => {
+     const cardId = String(event.active.id);
+     console.debug("[KanbanBoard] onDragStart, cardId:", cardId);
+     dragged.onDragStart(cardId);
+   }, [dragged]);
+
+   return {
+     onDragEnd,
+     onDragStart,
+     entry: dragged.entry,
+   };
 }
 
 export const KanbanBoard = (): React.ReactElement => {
