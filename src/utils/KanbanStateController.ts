@@ -1,4 +1,4 @@
-import { BasesEntry, BasesEntryGroup, BasesPropertyId, BasesQueryResult, BasesViewConfig, QueryController } from "obsidian";
+import { BasesEntry, BasesEntryGroup, BasesPropertyId, BasesQueryResult, BasesViewConfig, QueryController, App, TFile, FileManager } from "obsidian";
 import Emittery from "emittery";
 import { toSentenceCase, toSlugCase } from "./strings";
 
@@ -40,58 +40,63 @@ export type KanbanStateControllerUpdatedEventData = {
 };
 
 export class KanbanStateController extends Emittery<{
-  updated: KanbanStateControllerUpdatedEventData;
+   updated: KanbanStateControllerUpdatedEventData;
 }> {
-  public groups: Map<string, KanbanGroup> = new Map();
+   public groups: Map<string, KanbanGroup> = new Map();
+   private groupByPropertyId: BasesPropertyId | null = null;
 
-  constructor(
-    private queryController: QueryController,
-    private config?: BasesViewConfig,
-  ) {
-    super();
-  }
+   constructor(
+     private queryController: QueryController,
+     private app: App,
+     private config?: BasesViewConfig,
+   ) {
+     super();
+   }
 
   /**
-   * Takes new data as BasesQueryResult.
-   * 
-   * 
-    * Data we care about: 
+    * Takes new data as BasesQueryResult.
     * 
-    * - this.data.propertiesCache: contains the fields the user has ticked to show We should use this to show in the cards
-    * - this.data.groupedDataCache: contains the entries grouped by the field we are using for kanban columns
-    *   Format of this is [ { entries: BasesEntry[], key: { icon: string, data: string } } ]
-    * - this.data.config.data: contains the view config. We care about "kanban-columnNames" for column ordering
-   * 
-   * collates it into grouped structure for kanban board.
-   * 
-   * 1. empty existing groups
-   * 2. iterate over data entries
-   * 3. assign each entry to appropriate group based on criteria
-   * 4. update this.groups map
-   * 
-   * @param data - BasesQueryResult containing latest data entries
-   */
-  update(data: ObsidianKanbanbaseQueryResult): void {
-    const fields = data.properties;
-    const config = this.createKanbanConfig(data.config);
-    const columns = this.createColumnMap(data.groupedData);
-    const columnOrder = this.getColumnOrder(config.columnNames);
-    const entries = this.indexEntriesBy(data.data, 'file.path');
-    
-    
-    this.groups.clear();
+    * 
+     * Data we care about: 
+     * 
+     * - this.data.propertiesCache: contains the fields the user has ticked to show We should use this to show in the cards
+     * - this.data.groupedDataCache: contains the entries grouped by the field we are using for kanban columns
+     *   Format of this is [ { entries: BasesEntry[], key: { icon: string, data: string } } ]
+     * - this.data.config.data: contains the view config. We care about "kanban-columnNames" for column ordering
+     * 
+     * collates it into grouped structure for kanban board.
+     * 
+     * 1. empty existing groups
+     * 2. iterate over data entries
+     * 3. assign each entry to appropriate group based on criteria
+     * 4. update this.groups map
+     * 
+     * @param data - BasesQueryResult containing latest data entries
+     */
+   update(data: ObsidianKanbanbaseQueryResult): void {
+     const fields = data.properties;
+     const config = this.createKanbanConfig(data.config);
+     const columns = this.createColumnMap(data.groupedData);
+     const columnOrder = this.getColumnOrder(config.columnNames);
+     const entries = this.indexEntriesBy(data.data, 'file.path');
+     
+     // Infer the grouping property by looking at the first entry in groupedData
+     // and finding which property matches the group key
+     if (!this.groupByPropertyId) {
+       this.inferGroupByProperty(data);
+     }
+     
+     this.groups.clear();
 
-    // Placeholder implementation
-    console.log("[StateManager] collate called with data:", data);
-    // Actual implementation would process and organize the data
-    this.emit("updated", {
-      columns,
-      columnOrder,
-      fields,
-      entries,
-      config,
-    });
-  }
+     console.log("[KanbanStateController] Data updated with groupByPropertyId:", this.groupByPropertyId);
+     this.emit("updated", {
+       columns,
+       columnOrder,
+       fields,
+       entries,
+       config,
+     });
+   }
 
   indexEntriesBy(entries: BasesEntry[], property: BasesPropertyId): Map<string, BasesEntry> {
     const entryMap = new Map<string, BasesEntry>();
@@ -136,12 +141,103 @@ export class KanbanStateController extends Emittery<{
     return columnNamesArray.map(name => ({ key: toSlugCase(name), label: toSentenceCase(name) }));
   }
 
+  /**
+   * Infer the grouping property by examining the groupedData structure
+   * This identifies which property is used to create the kanban columns
+   * 
+   * @param data - The query result containing groupedData
+   */
+  private inferGroupByProperty(data: ObsidianKanbanbaseQueryResult): void {
+    if (!data.groupedData || data.groupedData.length === 0) {
+      console.warn("[KanbanStateController] No groupedData available to infer grouping property");
+      return;
+    }
+
+    // Get the first group and its first entry to infer the grouping property
+    const firstGroup = data.groupedData[0];
+    if (!firstGroup.entries || firstGroup.entries.length === 0) {
+      console.warn("[KanbanStateController] First group has no entries");
+      return;
+    }
+
+    const firstEntry = firstGroup.entries[0];
+    const groupKey = firstGroup.key?.toString();
+
+    if (!groupKey) {
+      console.warn("[KanbanStateController] First group has no key");
+      return;
+    }
+
+    // Try each property in the entry to find which one matches the group key
+    for (const property of data.properties) {
+      const propValue = firstEntry.getValue(property as BasesPropertyId);
+      if (propValue && propValue.toString() === groupKey) {
+        this.groupByPropertyId = property as BasesPropertyId;
+        console.debug(`[KanbanStateController] Inferred grouping property: ${property}`);
+        return;
+      }
+    }
+
+    console.warn(`[KanbanStateController] Could not infer grouping property for group key: ${groupKey}`);
+  }
+
+  /**
+   * Move a card (entry) to a different column (group) by updating its grouping property
+   * 
+   * @param cardId - The file path of the card to move
+   * @param targetGroupId - The target column ID (the new value for the grouping property)
+   */
   async moveCard(cardId: string, targetGroupId: string): Promise<void> {
-    // Placeholder implementation
-    console.log(
-      `[StateManager] moveCard called with cardId: ${cardId}, targetGroupId: ${targetGroupId}`
-    );
-    // Actual implementation would update the underlying data source
+    try {
+      console.debug(`[KanbanStateController] moveCard called with cardId: ${cardId}, targetGroupId: ${targetGroupId}`);
+
+      // Validate inputs
+      if (!cardId || !targetGroupId) {
+        throw new Error("cardId and targetGroupId are required");
+      }
+
+      if (!this.groupByPropertyId) {
+        throw new Error("Grouping property not yet determined. Wait for first data update.");
+      }
+
+      // Get the file from the vault
+      const file = this.app.vault.getFileByPath(cardId);
+      if (!file) {
+        throw new Error(`File not found for cardId: ${cardId}`);
+      }
+
+      // Update the file's frontmatter with the new property value
+      // The property name should be extracted from the BasesPropertyId (e.g., "note.status" -> "status")
+      const propertyName = this.extractPropertyName(this.groupByPropertyId);
+      
+      await this.app.fileManager.processFrontMatter(
+        file,
+        (frontmatter: any) => {
+          frontmatter[propertyName] = targetGroupId;
+        }
+      );
+
+      console.debug(`[KanbanStateController] Successfully moved card ${cardId} to ${targetGroupId}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(
+        `[KanbanStateController] Error moving card: ${errorMessage}`,
+        { cardId, targetGroupId, groupByPropertyId: this.groupByPropertyId }
+      );
+      throw error;
+    }
+  }
+
+  /**
+   * Extract the property name from a BasesPropertyId
+   * e.g., "note.status" -> "status", "file.name" -> "name"
+   * 
+   * @param propertyId - The BasesPropertyId to extract from
+   * @returns The property name
+   */
+  private extractPropertyName(propertyId: BasesPropertyId): string {
+    const parts = propertyId.split('.');
+    return parts[parts.length - 1];
   }
 
   createKanbanConfig (config: BasesViewConfig) {

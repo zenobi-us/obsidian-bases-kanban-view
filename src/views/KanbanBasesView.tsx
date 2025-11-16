@@ -11,15 +11,15 @@ export class KanbanBasesView extends BasesView {
   private root: Root | null = null;
   private element: HTMLElement | null = null;
   
-  constructor(
-    controller: QueryController,
-    element: HTMLElement
-  ) {
-    super(controller);
-    
-    this.controller = new KanbanStateController(controller)
-    this.element = element;
-    this.root = createRoot(this.element);
+   constructor(
+     controller: QueryController,
+     element: HTMLElement
+   ) {
+     super(controller);
+     
+     this.controller = new KanbanStateController(controller, this.app)
+     this.element = element;
+     this.root = createRoot(this.element);
 
     this.controller.on('updated', (data) => {
       this.render(data);
@@ -54,44 +54,33 @@ export class KanbanBasesView extends BasesView {
     this.controller.update(this.data);
   }
 
-  async onCardClick(cardId: string): Promise<void> {
-    console.log("[KanbanBasesView] onCardClick called with cardId:", cardId);
-  }
+   render(data: KanbanStateControllerUpdatedEventData): void {
+     if (!this.element) {
+       return;
+     }
 
-  async onCardMove(cardId: string, targetGroupId: string): Promise<void> {
-    console.log("[KanbanBasesView] onCardMove called with cardId:", cardId, "and targetGroupId:", targetGroupId);
-  }
+     if (this.root) {
+       console.log("[KanbanBasesView] Unmounting existing root before re-render");
+       this.root.unmount();
+       this.root = null;
+     }
 
-  render(data: KanbanStateControllerUpdatedEventData): void {
-    if (!this.element) {
-      return;
-    }
+     console.log("[KanbanBasesView] Creating new root for rendering", data);
 
-    if (this.root) {
-      console.log("[KanbanBasesView] Unmounting existing root before re-render");
-      this.root.unmount();
-      this.root = null;
-    }
+     this.root = createRoot(this.element);
 
-    console.log("[KanbanBasesView] Creating new root for rendering", data);
-
-    this.root = createRoot(this.element);
-
-    this.root.render(
-      <KanbanView
-        app={this.app}
-        columns={data.columns}
-        columnOrder={data.columnOrder}
-        fields={data.fields}
-        entries={data.entries}
-        config={data.config}
-        onCardClick={async (cardId) => this.onCardClick(cardId)}
-        onCardMove={async (cardId, targetGroupId) => {
-          this.onCardMove(cardId, targetGroupId);
-        }}
-      />,
-    );
-  }
+     this.root.render(
+       <KanbanView
+         app={this.app}
+         columns={data.columns}
+         columnOrder={data.columnOrder}
+         fields={data.fields}
+         entries={data.entries}
+         config={data.config}
+         onCardMove={(cardId, targetGroupId) => this.controller.moveCard(cardId, targetGroupId)}
+       />,
+     );
+   }
 
   static getViewOptions(): ViewOption[] {
     const output: ViewOption[] = [
