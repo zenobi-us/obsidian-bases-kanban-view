@@ -1,23 +1,10 @@
 #!/usr/bin/env bash
 #MISE description="Symlink plugin to Obsidian vault"
+#MISE depends=["setup-vault"]
 
 set -euo pipefail
 
-VAULT_PATH_FILE=".notes/VAULT_PATH"
-
-# Check if vault path is configured
-if [ ! -f "$VAULT_PATH_FILE" ]; then
-    echo "❌ Vault path not configured. Run 'mise run setup-vault' first"
-    exit 1
-fi
-
-VAULT_PATH=$(cat "$VAULT_PATH_FILE")
-
-# Validate vault path still exists
-if [ ! -d "$VAULT_PATH/.obsidian" ]; then
-    echo "❌ Obsidian vault not found at: $VAULT_PATH"
-    exit 1
-fi
+[ -z "${VAULT_PATH:-}" ] && echo "❌ VAULT_PATH not set. Add it to .env first." && exit 1
 
 PLUGINS_DIR="$VAULT_PATH/.obsidian/plugins"
 PLUGIN_LINK="$PLUGINS_DIR/kanban-bases-view"

@@ -3,6 +3,8 @@ import { useDroppable } from "@dnd-kit/core";
 import { Card } from "./Card";
 import styles from "./Column.module.css";
 import { KanbanGroup } from "../utils/KanbanStateController";
+import { Draggable } from "./Draggable";
+import classNames from "classnames";
 
 
 /**
@@ -30,20 +32,26 @@ export const Column = (props: {
   return (
     <div
       ref={droppable.setNodeRef}
-      className={`${styles.column} ${droppable.isOver ? styles.dropTarget : ""}`}
+      className={classNames(
+        styles.column,
+        "column",
+        droppable.isOver ? styles.dropTarget : "",
+        droppable.isOver ? "column--drop-target" : ""
+      )}
       data-column-id={columnId}
     >
-      <div className={styles.header} data-testid="column-header">
-        <h3 className={styles.title} data-testid="column-title">{columnName}</h3>
-        <span className={styles.count} data-testid="column-count">{props.group?.entries.length}</span>
+      <div className={classNames(styles.header, "column--header")} data-testid="column-header">
+        <h3 className={classNames(styles.title, "column--title")} data-testid="column-title">{columnName}</h3>
+        <span className={classNames(styles.count, "column--count")} data-testid="column-count">{props.group?.entries.length}</span>
       </div>
 
-      <div className={styles.cardsContainer} data-testid="cards-container">
+      <div className={classNames(styles.cardsContainer, "column--cards-container")} data-testid="cards-container">
         {props.group?.entries.map((entry) => (
-          <Card
-            key={entry.file.path}
-            entry={entry}
-          />
+          <Draggable key={entry.file.path} id={entry.file.path}>
+            <Card
+              entry={entry}
+            />
+          </Draggable>
         ))}
       </div>
     </div>

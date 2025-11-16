@@ -4,8 +4,10 @@
 
 set -euo pipefail
 
+# Bail out if VAULT_PATH not set
+[ -z "${VAULT_PATH:-}" ] && echo "❌ VAULT_PATH not set. Add it to .env first." && exit 1
+
 # Read vault path and plugin ID
-VAULT_PATH=$(cat .notes/VAULT_PATH)
 PLUGIN_ID=$(grep '"id"' manifest.json | head -1 | sed 's/.*"id": "\([^"]*\)".*/\1/')
 PLUGIN_PATH="$VAULT_PATH/.obsidian/plugins/$PLUGIN_ID"
 HOTRELOAD_PATH="$PLUGIN_PATH/.hotreload"

@@ -1,11 +1,8 @@
 import React, { useMemo } from 'react';
 import { BasesEntry } from 'obsidian';
-import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 import styles from './Card.module.css';
 import { useKanban } from '../context/KanbanContext';
 import classNames from 'classnames';
-import stringify from 'safe-stringify'
 
 
 /**
@@ -23,46 +20,36 @@ import stringify from 'safe-stringify'
  */
 export const Card = (props: {
   entry: BasesEntry;
-  isDragOverlay?: boolean;
+  className?: string;
 }): React.ReactElement => {
-  const kanban = useKanban();
-  const draggable = useDraggable({
-    id: props.entry.file.path,
-  });
-
-  const style = {
-    transform: CSS.Translate.toString(draggable.transform),
-  };
-
   const properties = useCardProperties(props.entry);
 
   return (
     <div
-      ref={draggable.setNodeRef}
-      style={style}
       className={classNames(
         styles.card,
+        'card',
         styles.kind,
-        draggable.isDragging && !props.isDragOverlay ? styles.dragging : '',
-        props.isDragOverlay ? styles.dragOverlay : '',
-        styles[`kind-${properties.type || 'unknown'}`]
+        'card--kind',
+        styles[`kind-${properties.type || ''}`],
+        `card--kind-${properties.type || 'unknown'}`,
+        props.className
       )}
-      {...draggable.listeners}
-      {...draggable.attributes}
       data-entry-path={props.entry.file.path}
       data-kind={properties.type}
     >
       <div className={classNames(
         styles.content,
+        'card--content'
       )}>
-        <div className={styles.header}>
-          <div className={styles.kindAvatar}>{properties.type?.substring(0, 1) ?? '?'}</div>
-          <div className={styles.title}>{properties.title}</div>
+        <div className={classNames(styles.header, 'card--header')}>
+          <div className={classNames(styles.kindAvatar, 'card--kind-avatar')}>{properties.type?.substring(0, 1) ?? '?'}</div>
+          <div className={classNames(styles.title, 'card--title')}>{properties.title}</div>
         </div>
 
-        <div className={styles.tags}>
-          {properties.tags?.split(',').map((tag) => (
-            <span key={tag.trim()} className={styles.tag}>
+        <div className={classNames(styles.tags, 'card--tags')}>
+          {properties.tags?.map((tag) => (
+            <span key={tag.trim()} className={classNames(styles.tag, 'card--tag')}>
               {tag.replace('#', '').trim()}
             </span>
           ))}
@@ -75,7 +62,7 @@ export const Card = (props: {
 
 type CardUiFields = {
   title: string;
-  tags?: string;
+  tags?: string[];
   type?: string;
   storyPoints?: number;
   priority?: string;
@@ -87,7 +74,17 @@ function useCardProperties(entry: BasesEntry) {
   const properties = useMemo((): CardUiFields => {
     return {
       title: String(entry.getValue(kanban.config.card.titleField) || 'Untitled'),
-      tags: String(entry.getValue(kanban.config.card.tagField) || ''),
+      tags: String(entry.getValue(kanban.config.card.tagField) || '').split(',')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+        .filter(tag => {
+          try {
+            JSON.parse(tag);
+            return false;
+          } catch {
+            return true;
+          }
+        }),
       type: String(entry.getValue(kanban.config.card.typeField) || ''),
       storyPoints: Number(entry.getValue(kanban.config.card.storyPointsField) || 0),
       priority: String(entry.getValue(kanban.config.card.priorityField) || ''),

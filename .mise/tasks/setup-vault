@@ -3,35 +3,36 @@
 
 set -euo pipefail
 
-VAULT_PATH_FILE=".notes/VAULT_PATH"
-
-# If file exists and points to valid path, use it
-if [ -f "$VAULT_PATH_FILE" ]; then
-    VAULT_PATH=$(cat "$VAULT_PATH_FILE")
-    if [ -d "$VAULT_PATH/.obsidian" ]; then
-        exit 0
-    fi
+# Check if VAULT_PATH is set and valid
+if [ -n "${VAULT_PATH:-}" ] && [ -d "$VAULT_PATH/.obsidian" ]; then
+    echo "✅ Using vault path from .env: $VAULT_PATH"
+    exit 0
 fi
 
-# File missing or path invalid - ask user
-echo "🔍 Obsidian vault not configured"
+# VAULT_PATH missing or invalid - ask user
+echo "🔍 Obsidian vault not configured in .env"
 echo ""
 echo "Enter the path to your Obsidian vault (the directory containing .obsidian/):"
-read -rp "Vault path: " VAULT_PATH
+read -rp "Vault path: " NEW_VAULT_PATH
 
 # Validate path
-if [ ! -d "$VAULT_PATH" ]; then
-    echo "❌ Directory doesn't exist: $VAULT_PATH"
+if [ ! -d "$NEW_VAULT_PATH" ]; then
+    echo "❌ Directory doesn't exist: $NEW_VAULT_PATH"
     exit 1
 fi
 
-if [ ! -d "$VAULT_PATH/.obsidian" ]; then
-    echo "❌ Not an Obsidian vault (no .obsidian directory): $VAULT_PATH"
+if [ ! -d "$NEW_VAULT_PATH/.obsidian" ]; then
+    echo "❌ Not an Obsidian vault (no .obsidian directory): $NEW_VAULT_PATH"
     exit 1
 fi
 
-# Store the path
-mkdir -p .notes
-echo "$VAULT_PATH" >"$VAULT_PATH_FILE"
-echo "✅ Vault path saved to .notes/VAULT_PATH"
+# Update or create .env file
+if [ -f ".env" ]; then
+    # Remove existing VAULT_PATH line if present
+    grep -v "^VAULT_PATH=" .env > .env.tmp && mv .env.tmp .env || true
+fi
+
+# Add new VAULT_PATH
+echo "VAULT_PATH=$NEW_VAULT_PATH" >> .env
+echo "✅ Vault path saved to .env"
 echo ""

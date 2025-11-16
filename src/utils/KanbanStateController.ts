@@ -29,7 +29,7 @@ export function isKanbanQueryResult(
 export type KanbanGroup = BasesEntryGroup
 export type KanbanBoard = Map<string, KanbanGroup>;
 export type KanbanCardFieldName = ObsidianKanbanbaseQueryResult["properties"];
-export type KanbanConfig = ReturnType<typeof KanbanStateController.createKanbanConfig>;
+export type KanbanConfig = ReturnType<KanbanStateController['createKanbanConfig']>;
 
 export type KanbanStateControllerUpdatedEventData = {
   columnOrder: {key: string, label: string}[];
@@ -73,10 +73,10 @@ export class KanbanStateController extends Emittery<{
    */
   update(data: ObsidianKanbanbaseQueryResult): void {
     const fields = data.properties;
-    const config = KanbanStateController.createKanbanConfig(data.config);
-    const columns = KanbanStateController.createColumnMap(data.groupedData);
-    const columnOrder = KanbanStateController.getColumnOrder(config.columnNames);
-    const entries = KanbanStateController.indexEntriesBy(data.data, 'note.path');
+    const config = this.createKanbanConfig(data.config);
+    const columns = this.createColumnMap(data.groupedData);
+    const columnOrder = this.getColumnOrder(config.columnNames);
+    const entries = this.indexEntriesBy(data.data, 'file.path');
     
     
     this.groups.clear();
@@ -93,18 +93,25 @@ export class KanbanStateController extends Emittery<{
     });
   }
 
-  static indexEntriesBy(entries: BasesEntry[], property: BasesPropertyId): Map<string, BasesEntry> {
+  indexEntriesBy(entries: BasesEntry[], property: BasesPropertyId): Map<string, BasesEntry> {
     const entryMap = new Map<string, BasesEntry>();
+    console.log("[StateManager] indexEntriesBy called with property:", { entries, property });
     for (const entry of entries) {
+      
       const key = entry.getValue(property);
-      if (key) {
-        entryMap.set(key.toString(), entry);
+      if (!key) {
+        console.warn("[StateManager] Entry property for indexing:", { entry, property });
+        continue
       }
+
+      entryMap.set(key.toString(), entry);
     }
+
+    console.log("[StateManager] Indexed entries:", Object.fromEntries(entryMap.entries()));
     return entryMap;
   }
 
-  static createColumnMap(groups: KanbanGroup[]): Map<string, KanbanGroup> {
+  createColumnMap(groups: KanbanGroup[]): Map<string, KanbanGroup> {
     const columnMap = new Map<string, KanbanGroup>();
     for (const group of groups) {
       if (!group.key) {
@@ -118,7 +125,7 @@ export class KanbanStateController extends Emittery<{
     return columnMap;
   }
 
-  static getColumnOrder(columnNames: string): {key: string, label: string}[] {
+  getColumnOrder(columnNames: string): {key: string, label: string}[] {
     if (!columnNames) {
       return [];
     }
@@ -137,7 +144,7 @@ export class KanbanStateController extends Emittery<{
     // Actual implementation would update the underlying data source
   }
 
-  static createKanbanConfig (config: BasesViewConfig) {
+  createKanbanConfig (config: BasesViewConfig) {
     console.log("[KanbanConfig] Creating config from BasesViewConfig:", config);
     if (!config) {
       throw new Error("No config provided");

@@ -73,7 +73,7 @@ export class KanbanBasesView extends BasesView {
       this.root = null;
     }
 
-    console.log("[KanbanBasesView] Creating new root for rendering");
+    console.log("[KanbanBasesView] Creating new root for rendering", data);
 
     this.root = createRoot(this.element);
 

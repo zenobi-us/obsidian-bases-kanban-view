@@ -17,7 +17,7 @@
 
 .card:hover {
 	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.15);
-	transform: translateY(calc(var(--size-2-1) * -1));
+	/* transform: translateY(calc(var(--size-2-1) * -1)); */
 	background-color: var(--background-secondary);
 	cursor: pointer;
 }
@@ -42,7 +42,7 @@
 /* Drag overlay styling */
 .dragOverlay {
 	filter: drop-shadow(0 0.5rem 1rem rgba(0, 0, 0, 0.3));
-	opacity: 0.9;
+	opacity: 0.2;
 }
 
 .header {
