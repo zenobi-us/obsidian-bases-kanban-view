@@ -59,10 +59,11 @@ export const Card = (props: {
           <div className={styles.kindAvatar}>{properties.type?.substring(0, 1) ?? '?'}</div>
           <div className={styles.title}>{properties.title}</div>
         </div>
+
         <div className={styles.tags}>
           {properties.tags?.split(',').map((tag) => (
             <span key={tag.trim()} className={styles.tag}>
-              {tag.trim()}
+              {tag.replace('#', '').trim()}
             </span>
           ))}
         </div>

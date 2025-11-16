@@ -75,6 +75,22 @@
 	letter-spacing: 0.3px;
 }
 
+.tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-2-1);
+	margin-left: 2rem;
+}
+
+.tags .tag {
+	background-color: var(--background-secondary);
+	color: var(--text-muted);
+	padding: var(--size-2-1) var(--size-4-2);
+	border-radius: var(--radius-s);
+	font-size: var(--font-size-4-0);
+	font-weight: 500;
+}
+
 
 /**
  * Kind-specific styles with theme-aware color mixing
