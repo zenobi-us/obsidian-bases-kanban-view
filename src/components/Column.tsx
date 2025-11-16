@@ -20,11 +20,12 @@ import classNames from "classnames";
  * @returns React element rendering the column
  */
 export const Column = (props: {
-  label?: string;
+  id: string;
+  label: string;
   group?: KanbanGroup | undefined;
 }): React.ReactElement => {
-  const columnId = props.group?.key?.toString() || "Backlog";
-  const columnName = props.label || props.group?.key?.toString() || "Backlog";
+  const columnId = props.id
+  const columnName = props.label
   const droppable = useDroppable({
     id: columnId,
   });

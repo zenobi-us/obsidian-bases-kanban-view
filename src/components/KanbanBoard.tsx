@@ -135,7 +135,7 @@ export const KanbanBoard = (): React.ReactElement => {
     <DndContext collisionDetection={closestCorners} onDragEnd={dragged.onDragEnd} onDragStart={dragged.onDragStart}>
       <div className={classNames(styles.board, "board")}>
         {kanban.columnOrder.map((order) => (
-          <Column key={order.key} label={order.label} group={kanban.columns.get(order.key)} />
+          <Column key={order.key} id={order.key} label={order.label} group={kanban.columns.get(order.key)} />
         ))}
       </div>
       <DragOverlay>
