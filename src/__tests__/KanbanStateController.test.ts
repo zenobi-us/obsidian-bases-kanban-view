@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { KanbanStateController } from "../utils/KanbanStateController";
-import { App, QueryController, BasesViewConfig, TFile } from "obsidian";
+import { App, TFile, BasesViewConfig } from "obsidian";
 
 describe("KanbanStateController", () => {
   let controller: KanbanStateController;
-  let mockQueryController: QueryController;
   let mockApp: App;
   let mockFileManager: any;
   let mockVault: any;
+  let mockConfig: any;
 
   beforeEach(() => {
     // Mock file manager
@@ -20,40 +20,70 @@ describe("KanbanStateController", () => {
       getFileByPath: vi.fn(),
     };
 
+    // Mock config that implements BasesViewConfig interface
+    mockConfig = {
+      get: vi.fn((key: string) => {
+        const configMap: Record<string, string> = {
+          "kanban-columnProperty": "note.status",
+          "kanban-columnNames": "To Do,In Progress,Done",
+        };
+        return configMap[key] || null;
+      }),
+    } as any;
+
     // Mock app
     mockApp = {
       fileManager: mockFileManager,
       vault: mockVault,
     } as any;
 
-    // Mock QueryController
-    mockQueryController = {} as any;
-
-    controller = new KanbanStateController(mockQueryController, mockApp);
+    controller = new KanbanStateController(mockApp);
   });
 
   describe("moveCard", () => {
     it("should throw error if cardId is missing", async () => {
+      // Initialize config first
+      controller.update({
+        groupedData: [],
+        properties: [],
+        config: mockConfig,
+        data: [],
+      } as any);
+
       await expect(controller.moveCard("", "target")).rejects.toThrow(
         "cardId and targetGroupId are required"
       );
     });
 
     it("should throw error if targetGroupId is missing", async () => {
+      // Initialize config first
+      controller.update({
+        groupedData: [],
+        properties: [],
+        config: mockConfig,
+        data: [],
+      } as any);
+
       await expect(controller.moveCard("file.md", "")).rejects.toThrow(
         "cardId and targetGroupId are required"
       );
     });
 
-    it("should throw error if grouping property not yet determined", async () => {
+    it("should throw error if config not initialized", async () => {
+      // Don't call update(), so config remains null
       await expect(
         controller.moveCard("file.md", "Done")
-      ).rejects.toThrow("Grouping property not yet determined");
+      ).rejects.toThrow("Kanban config not initialized");
     });
 
     it("should throw error if file not found", async () => {
-      // Manually set grouping property to bypass the "not determined" check
-      (controller as any).groupByPropertyId = "note.status";
+      // Initialize config
+      controller.update({
+        groupedData: [],
+        properties: [],
+        config: mockConfig,
+        data: [],
+      } as any);
 
       mockVault.getFileByPath.mockReturnValue(null);
 
@@ -63,8 +93,13 @@ describe("KanbanStateController", () => {
     });
 
     it("should update file frontmatter when moving card", async () => {
-      // Manually set grouping property
-      (controller as any).groupByPropertyId = "note.status";
+      // Initialize config
+      controller.update({
+        groupedData: [],
+        properties: [],
+        config: mockConfig,
+        data: [],
+      } as any);
 
       const mockFile = {} as TFile;
       mockVault.getFileByPath.mockReturnValue(mockFile);
@@ -78,8 +113,13 @@ describe("KanbanStateController", () => {
     });
 
     it("should extract property name correctly from BasesPropertyId", async () => {
-      // Manually set grouping property
-      (controller as any).groupByPropertyId = "note.status";
+      // Initialize config
+      controller.update({
+        groupedData: [],
+        properties: [],
+        config: mockConfig,
+        data: [],
+      } as any);
 
       const mockFile = {} as TFile;
       mockVault.getFileByPath.mockReturnValue(mockFile);
@@ -102,8 +142,22 @@ describe("KanbanStateController", () => {
     });
 
     it("should handle complex property IDs", async () => {
-      // Manually set grouping property
-      (controller as any).groupByPropertyId = "file.some.nested.property" as any;
+      // Mock config with nested property
+      mockConfig.get = vi.fn((key: string) => {
+        const configMap: Record<string, string> = {
+          "kanban-columnProperty": "file.some.nested.property",
+          "kanban-columnNames": "To Do,In Progress,Done",
+        };
+        return configMap[key] || null;
+      });
+
+      // Initialize config
+      controller.update({
+        groupedData: [],
+        properties: [],
+        config: mockConfig,
+        data: [],
+      } as any);
 
       const mockFile = {} as TFile;
       mockVault.getFileByPath.mockReturnValue(mockFile);
