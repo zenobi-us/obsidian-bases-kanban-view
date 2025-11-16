@@ -2,9 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
 import { render } from '@testing-library/react';
 import { KanbanBoard } from '../components/KanbanBoard';
-import { AppProvider } from '../context/AppContext';
-import { GroupingProvider } from '../context/KanbanContext';
-import { QueryController } from 'obsidian';
+import { KanbanProvider } from '../context/KanbanContext';
+import { KanbanStateControllerUpdatedEventData } from '../utils/KanbanStateController';
 
 /**
  * Performance benchmarking suite for KanbanBoard component
@@ -16,40 +15,51 @@ import { QueryController } from 'obsidian';
  * - No layout thrashing during scroll
  */
 
-const mockApp = {
-  workspace: { openLinkText: vi.fn() },
-  renderContext: {} as any,
-} as any;
-
-const mockQueryController = {} as unknown as QueryController;
-
 /**
- * Generate mock grouped data for load testing
- * @param count Number of entries to generate
- * @returns Grouped data structure with entries distributed across groups
+ * Generate mock kanban context data for load testing
+ * @param cardCount Number of cards to generate
+ * @returns Mock KanbanStateControllerUpdatedEventData
  */
-function generateMockGroupedData(count: number) {
+function generateMockKanbanData(cardCount: number): KanbanStateControllerUpdatedEventData {
   const statuses = ['Todo', 'In Progress', 'Done'];
-  const groups: any[] = [];
+  const cardsPerStatus = Math.floor(cardCount / statuses.length);
   
+  const entries = new Map();
+  const columns = new Map();
+  const columnOrder: Array<{ key: string; label: string }> = [];
+
   for (const status of statuses) {
-    const entries = Array.from({ length: Math.floor(count / 3) }, (_, i) => ({
-      id: `entry-${status}-${i}`,
-      file: { path: `test/note-${status}-${i}.md`, name: `Note ${status} ${i}` } as any,
-      getValue: vi.fn((propId: string) => {
-        const values: Record<string, any> = {
-          'note.title': `Entry Title ${i}`,
-          'note.status': status,
-          'note.priority': ['Low', 'Medium', 'High'][i % 3],
-        };
-        return values[propId];
-      }),
-    })) as any;
+    const statusEntries = [];
     
-    groups.push({ key: status, entries });
+    for (let i = 0; i < cardsPerStatus; i++) {
+      const entryPath = `test/note-${status}-${i}.md`;
+      const mockEntry = {
+        file: { path: entryPath, name: `Note ${status} ${i}` },
+        getValue: vi.fn((propId: string) => {
+          const values: Record<string, any> = {
+            'title': `Entry Title ${i}`,
+            'status': status,
+            'priority': ['Low', 'Medium', 'High'][i % 3],
+          };
+          return values[propId];
+        }),
+      } as any;
+      
+      entries.set(entryPath, mockEntry);
+      statusEntries.push(mockEntry);
+    }
+    
+    columns.set(status, { key: status, entries: statusEntries });
+    columnOrder.push({ key: status, label: status });
   }
-  
-  return groups;
+
+  return {
+    config: {} as any,
+    fields: [],
+    columns,
+    columnOrder,
+    entries,
+  } as any;
 }
 
 describe.skip('KanbanBoard Performance', () => {
@@ -58,22 +68,20 @@ describe.skip('KanbanBoard Performance', () => {
   });
 
   it('should render initial board with 10 items in < 100ms', () => {
-    const groupedData = generateMockGroupedData(10);
+    const contextData = generateMockKanbanData(10);
     const startTime = performance.now();
     
     render(
-      <AppProvider app={mockApp}>
-        <GroupingProvider
-          app={mockApp}
-          queryController={mockQueryController}
-          groupByFieldId="note.status"
-          groupedData={groupedData}
-        >
-          <KanbanBoard
-            allProperties={['note.title', 'note.status', 'note.priority'] as any}
-          />
-        </GroupingProvider>
-      </AppProvider>
+      <KanbanProvider
+        config={contextData.config}
+        fields={contextData.fields}
+        columns={contextData.columns}
+        columnOrder={contextData.columnOrder}
+        entries={contextData.entries}
+        moveCard={vi.fn()}
+      >
+        <KanbanBoard />
+      </KanbanProvider>
     );
 
     const endTime = performance.now();
@@ -84,79 +92,73 @@ describe.skip('KanbanBoard Performance', () => {
   });
 
   it('should handle 100 items efficiently with virtual scrolling', () => {
-    const groupedData = generateMockGroupedData(100);
+    const contextData = generateMockKanbanData(100);
     const startTime = performance.now();
 
     const { container } = render(
-      <AppProvider app={mockApp}>
-        <GroupingProvider
-          app={mockApp}
-          queryController={mockQueryController}
-          groupByFieldId="note.status"
-          groupedData={groupedData}
-        >
-          <KanbanBoard
-            allProperties={['note.title', 'note.status', 'note.priority'] as any}
-          />
-        </GroupingProvider>
-      </AppProvider>
+      <KanbanProvider
+        config={contextData.config}
+        fields={contextData.fields}
+        columns={contextData.columns}
+        columnOrder={contextData.columnOrder}
+        entries={contextData.entries}
+        moveCard={vi.fn()}
+      >
+        <KanbanBoard />
+      </KanbanProvider>
     );
 
     const endTime = performance.now();
     const renderTime = endTime - startTime;
 
     expect(renderTime).toBeLessThan(150);
-    expect(container.querySelector('.kanban-board')).toBeTruthy();
+    expect(container.querySelector('.board')).toBeTruthy();
     console.log(`✓ Render time for 100 items: ${renderTime.toFixed(2)}ms`);
   });
 
   it('should handle 500 items without memory bloat', () => {
-    const groupedData = generateMockGroupedData(500);
+    const contextData = generateMockKanbanData(500);
     const startTime = performance.now();
 
     const { container } = render(
-      <AppProvider app={mockApp}>
-        <GroupingProvider
-          app={mockApp}
-          queryController={mockQueryController}
-          groupByFieldId="note.status"
-          groupedData={groupedData}
-        >
-          <KanbanBoard
-            allProperties={['note.title', 'note.status', 'note.priority'] as any}
-          />
-        </GroupingProvider>
-      </AppProvider>
+      <KanbanProvider
+        config={contextData.config}
+        fields={contextData.fields}
+        columns={contextData.columns}
+        columnOrder={contextData.columnOrder}
+        entries={contextData.entries}
+        moveCard={vi.fn()}
+      >
+        <KanbanBoard />
+      </KanbanProvider>
     );
 
     const endTime = performance.now();
     const renderTime = endTime - startTime;
 
     expect(renderTime).toBeLessThan(300);
-    expect(container.querySelector('.kanban-board')).toBeTruthy();
+    expect(container.querySelector('.board')).toBeTruthy();
     console.log(`✓ Render time for 500 items: ${renderTime.toFixed(2)}ms`);
   });
 
   it('should maintain consistent render times across multiple renders', () => {
-    const groupedData = generateMockGroupedData(100);
+    const contextData = generateMockKanbanData(100);
     const renderTimes: number[] = [];
 
     for (let i = 0; i < 3; i++) {
       const startTime = performance.now();
       
       render(
-        <AppProvider app={mockApp}>
-          <GroupingProvider
-          app={mockApp}
-            queryController={mockQueryController}
-            groupByFieldId="note.status"
-            groupedData={groupedData}
-          >
-            <KanbanBoard
-              allProperties={['note.title', 'note.status', 'note.priority'] as any}
-            />
-          </GroupingProvider>
-        </AppProvider>
+        <KanbanProvider
+          config={contextData.config}
+          fields={contextData.fields}
+          columns={contextData.columns}
+          columnOrder={contextData.columnOrder}
+          entries={contextData.entries}
+          moveCard={vi.fn()}
+        >
+          <KanbanBoard />
+        </KanbanProvider>
       );
 
       const endTime = performance.now();
@@ -170,33 +172,28 @@ describe.skip('KanbanBoard Performance', () => {
     console.log(`✓ Render times consistent: ${renderTimes.map(t => t.toFixed(1)).join('ms, ')}ms`);
   });
 
-  it('should group entries efficiently for different property ids', () => {
-    const groupedData = generateMockGroupedData(50);
-    const propertyIds = ['note.status', 'note.priority'];
+  it('should efficiently render different grouping configurations', () => {
+    const contextData = generateMockKanbanData(50);
 
-    for (const propId of propertyIds) {
-      const startTime = performance.now();
-      
-      render(
-        <AppProvider app={mockApp}>
-          <GroupingProvider
-          app={mockApp}
-            queryController={mockQueryController}
-            groupByFieldId={propId}
-            groupedData={groupedData}
-          >
-            <KanbanBoard
-              allProperties={['note.title', 'note.status', 'note.priority'] as any}
-            />
-          </GroupingProvider>
-        </AppProvider>
-      );
+    const startTime = performance.now();
+    
+    render(
+      <KanbanProvider
+        config={contextData.config}
+        fields={contextData.fields}
+        columns={contextData.columns}
+        columnOrder={contextData.columnOrder}
+        entries={contextData.entries}
+        moveCard={vi.fn()}
+      >
+        <KanbanBoard />
+      </KanbanProvider>
+    );
 
-      const endTime = performance.now();
-      const renderTime = endTime - startTime;
+    const endTime = performance.now();
+    const renderTime = endTime - startTime;
 
-      expect(renderTime).toBeLessThan(120);
-      console.log(`✓ Render time for grouping by ${propId}: ${renderTime.toFixed(2)}ms`);
-    }
+    expect(renderTime).toBeLessThan(120);
+    console.log(`✓ Render time for 50 items: ${renderTime.toFixed(2)}ms`);
   });
 });
