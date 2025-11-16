@@ -17,7 +17,7 @@ export class KanbanBasesView extends BasesView {
    ) {
      super(controller);
      
-     this.controller = new KanbanStateController(controller, this.app)
+     this.controller = new KanbanStateController(this.app)
      this.element = element;
      this.root = createRoot(this.element);
 
@@ -93,6 +93,13 @@ export class KanbanBasesView extends BasesView {
           default: "Backlog,Todo,In Progress,In Review,Done",
           placeholder: "e.g., Backlog,Todo,In Progress,In Review,Done",
         },
+        {
+          type: "property",
+          displayName: "Group by",
+          key: "kanban-columnProperty",
+          default: "status",
+          placeholder: "e.g., status",
+        }
       ]},
       { type: "group", displayName: "Cards", items: [
         {
