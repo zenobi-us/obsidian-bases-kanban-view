@@ -5,14 +5,7 @@
 	border-style: solid;
 	border-radius: var(--radius-s);
 	padding: var(--size-4-3);
-	cursor: grab;
-	transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
-	flex-shrink: 0;
-	user-select: none;
-	touch-action: none;
-	position: relative;
 }
-
 
 
 .card:hover {
@@ -27,22 +20,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--size-4-2);
-}
-
-
-/* Drag state */
-.dragging {
-	opacity: 0.5;
-	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.2);
-	transform: scale(1.02);
-	z-index: 9999;
-	position: relative;
-}
-
-/* Drag overlay styling */
-.dragOverlay {
-	filter: drop-shadow(0 0.5rem 1rem rgba(0, 0, 0, 0.3));
-	opacity: 0.2;
 }
 
 .header {

@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { BasesEntry } from 'obsidian';
 import classNames from 'classnames';
-import styles from './Card.module.css';
+import styles from './Draggable.module.css';
 import { Card } from './Card';
 
 
@@ -26,35 +26,14 @@ import { Card } from './Card';
 export const OverlayCard = (props: {
   entry: BasesEntry;
 }): React.ReactElement => {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [transform, setTransform] = React.useState<string>('translate(-110px, -40px)');
-
-  useEffect(() => {
-    // Measure the card on first render to calculate proper offset
-    if (cardRef.current) {
-      const { width, height } = cardRef.current.getBoundingClientRect();
-      // Offset to move from center-based positioning to top-left-based positioning
-      // We use approximately 1/3 of width/height to account for padding and standard grab point
-      const offsetX = -(width / 2 - 20);  // Slight offset from top-left corner
-      const offsetY = -(height / 2 - 15); // Slight offset from top edge
-      setTransform(`translate(${offsetX}px, ${offsetY}px)`);
-    }
-  }, [props.entry]);
-
-  const wrapperStyle: React.CSSProperties = {
-    transform,
-    pointerEvents: 'none',
-  };
 
   return (
-    <div ref={cardRef} style={wrapperStyle}>
-      <Card 
-        entry={props.entry}
-        className={classNames(
-          styles.dragOverlay,
-          'card--drag-overlay'
-        )}
-      />
-    </div>
+    <Card 
+      entry={props.entry}
+      className={classNames(
+        styles['draggable--overlay'],
+        'card--drag-overlay'
+      )}
+    />
   );
 };

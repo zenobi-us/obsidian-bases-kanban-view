@@ -5,6 +5,7 @@ import styles from "./Column.module.css";
 import { KanbanGroup } from "../utils/KanbanStateController";
 import { Draggable } from "./Draggable";
 import classNames from "classnames";
+import { Droppable } from "./Droppable";
 
 
 /**
@@ -26,20 +27,15 @@ export const Column = (props: {
 }): React.ReactElement => {
   const columnId = props.id
   const columnName = props.label
-  const droppable = useDroppable({
-    id: columnId,
-  });
 
   return (
-    <div
-      ref={droppable.setNodeRef}
+    <Droppable
+      id={columnId}
+      data-column-id={columnId}
       className={classNames(
         styles.column,
         "column",
-        droppable.isOver ? styles.dropTarget : "",
-        droppable.isOver ? "column--drop-target" : ""
       )}
-      data-column-id={columnId}
     >
       <div className={classNames(styles.header, "column--header")} data-testid="column-header">
         <h3 className={classNames(styles.title, "column--title")} data-testid="column-title">{columnName}</h3>
@@ -55,6 +51,6 @@ export const Column = (props: {
           </Draggable>
         ))}
       </div>
-    </div>
+    </Droppable>
   );
 };

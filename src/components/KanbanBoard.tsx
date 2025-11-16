@@ -6,11 +6,11 @@ import {
   DragStartEvent,
   closestCorners,
 } from "@dnd-kit/core";
+import {getClientRect} from "@dnd-kit/core"
 import type { BasesEntry } from "obsidian";
 
 import { useKanban } from "../context/KanbanContext";
 import { Column } from "./Column";
-import { Card } from "./Card";
 import { OverlayCard } from "./OverlayCard";
 import styles from "./KanbanBoard.module.css";
 import { Notice } from "./Notice";
@@ -132,7 +132,10 @@ export const KanbanBoard = (): React.ReactElement => {
   }
 
   return (
-    <DndContext collisionDetection={closestCorners} onDragEnd={dragged.onDragEnd} onDragStart={dragged.onDragStart}>
+    <DndContext
+      onDragEnd={dragged.onDragEnd}
+      onDragStart={dragged.onDragStart}
+    >
       <div className={classNames(styles.board, "board")}>
         {kanban.columnOrder.map((order) => (
           <Column key={order.key} id={order.key} label={order.label} group={kanban.columns.get(order.key)} />

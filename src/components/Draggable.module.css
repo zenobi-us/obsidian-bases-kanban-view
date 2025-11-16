@@ -1,0 +1,20 @@
+.draggable {
+    cursor: grab;
+	flex-shrink: 0;
+	user-select: none;
+	touch-action: none;
+	display: flex;;
+}
+
+.draggable--is-dragging {
+	opacity: 0.2;
+	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.2);
+	z-index: 9999;
+	filter: drop-shadow(0 0.5rem 1rem rgba(0, 0, 0, 0.3));
+}
+
+.draggable--overlay {
+	transform: translate(calc(-100% - 2em),-50%);
+	opacity: 0.8;
+	pointer-events: none;
+}
