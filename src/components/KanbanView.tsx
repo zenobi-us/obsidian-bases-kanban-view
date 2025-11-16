@@ -21,6 +21,7 @@ export const KanbanView = (props: {
   columns: KanbanStateControllerUpdatedEventData["columns"];
   fields: KanbanStateControllerUpdatedEventData["fields"];
   entries: KanbanStateControllerUpdatedEventData["entries"];
+  config: KanbanStateControllerUpdatedEventData["config"];
   onCardMove: (cardId: string, targetGroupId: string) => Promise<void>;
   onCardClick?: (cardId: string) => void;
 }): React.ReactElement => {
@@ -28,6 +29,7 @@ export const KanbanView = (props: {
   return (
     <AppProvider app={props.app}>
       <KanbanProvider
+        config={props.config}
         columns={props.columns}
         columnOrder={props.columnOrder}
         fields={props.fields}

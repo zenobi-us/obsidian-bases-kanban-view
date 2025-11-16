@@ -84,6 +84,7 @@ export class KanbanBasesView extends BasesView {
         columnOrder={data.columnOrder}
         fields={data.fields}
         entries={data.entries}
+        config={data.config}
         onCardClick={async (cardId) => this.onCardClick(cardId)}
         onCardMove={async (cardId, targetGroupId) => {
           this.onCardMove(cardId, targetGroupId);
@@ -94,13 +95,53 @@ export class KanbanBasesView extends BasesView {
 
   static getViewOptions(): ViewOption[] {
     const output: ViewOption[] = [
-      {
-        type: "text",
-        displayName: "Column order",
-        key: "kanban-columnNames",
-        default: "Backlog,Todo,In Progress,In Review,Done",
-        placeholder: "e.g., Backlog,Todo,In Progress,In Review,Done",
-      },
+
+      { type: "group", displayName: "Columns", items: [
+        {
+          type: "text",
+          displayName: "Column order",
+          key: "kanban-columnNames",
+          default: "Backlog,Todo,In Progress,In Review,Done",
+          placeholder: "e.g., Backlog,Todo,In Progress,In Review,Done",
+        },
+      ]},
+      { type: "group", displayName: "Cards", items: [
+        {
+          type: "property",
+          displayName: "title",
+          key: "kanban-cardTitleProperty",
+          default: "name",
+          placeholder: "e.g., name",
+        },
+        {
+          type: "property",
+          displayName: "Tags", 
+          key: "kanban-cardTagsProperty",
+          default: "tags",
+          placeholder: "e.g., tags",
+        },
+        {
+          type: "property",
+          displayName: "Type",
+          key: "kanban-cardTypeProperty",
+          default: "kind",
+          placeholder: "e.g., kind",
+        },
+        {
+          type: "property",
+          displayName: "Story points",
+          key: "kanban-cardStoryPointsProperty",
+          default: "story points",
+          placeholder: "e.g., story points",
+        },
+        {
+          type: "property",
+          displayName: "priority",
+          key: "kanban-cardPriorityProperty",
+          default: "priority",
+          placeholder: "e.g., priority",
+        },
+      ]},
     ];
     return output;
   }

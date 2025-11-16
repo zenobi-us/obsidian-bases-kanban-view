@@ -29,7 +29,6 @@
     "@vitest/coverage-istanbul": "^4.0.8",
     "@vitest/coverage-v8": "^4.0.8",
     "@vitest/ui": "^4.0.8",
-    "arktype": "^2.1.26",
     "builtin-modules": "3.2.0",
     "esbuild": "^0.26.0",
     "happy-dom": "^20.0.10",
@@ -44,8 +43,12 @@
   },
   "dependencies": {
     "@types/events": "^3.0.3",
+    "classnames": "^2.5.1",
     "emittery": "^1.2.0",
     "events": "^3.3.0",
-    "scheduler": "^0.27.0"
+    "json-stringify-safe": "^5.0.1",
+    "safe-stringify": "^1.2.0",
+    "scheduler": "^0.27.0",
+    "typebox": "^1.0.53"
   }
 }

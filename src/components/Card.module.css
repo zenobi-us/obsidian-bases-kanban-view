@@ -1,15 +1,19 @@
 /* Card base styles */
 .card {
 	background: var(--background-primary);
-	border: var(--border-width) solid var(--divider-color);
-	border-radius: var(--radius-m);
+	border-width: calc(var(--border-width) * 2);
+	border-style: solid;
+	border-radius: var(--radius-s);
 	padding: var(--size-4-3);
 	cursor: grab;
 	transition: box-shadow 0.2s ease, transform 0.2s ease, background-color 0.2s ease;
 	flex-shrink: 0;
 	user-select: none;
 	touch-action: none;
+	position: relative;
 }
+
+
 
 .card:hover {
 	box-shadow: 0 var(--size-4-1) var(--size-4-3) rgba(0, 0, 0, 0.15);
@@ -25,60 +29,6 @@
 	gap: var(--size-4-2);
 }
 
-/* Tier-based field rendering */
-.tier1,
-.tier2,
-.tier3 {
-	display: flex;
-	flex-direction: column;
-	gap: var(--size-2-1);
-	margin-bottom: var(--size-4-2);
-}
-
-/* Tier 1: Critical fields - most prominent */
-.tier1 {
-	font-weight: var(--font-semibold);
-	font-size: var(--font-ui-medium);
-	color: var(--text-normal);
-}
-
-/* Tier 2: Important context - medium prominence */
-.tier2 {
-	font-size: var(--font-ui-small);
-	color: var(--text-normal);
-	opacity: 0.9;
-	border-top: var(--border-width) solid var(--divider-color);
-	padding-top: var(--size-2-1);
-}
-
-/* Tier 3: Additional details - least prominent */
-.tier3 {
-	font-size: var(--font-ui-small);
-	color: var(--text-muted);
-	opacity: 0.7;
-}
-
-/* Field container */
-.field {
-	display: flex;
-	flex-direction: column;
-	gap: var(--size-2-1);
-}
-
-/* Field label */
-.fieldLabel {
-	color: var(--text-muted);
-	font-weight: var(--font-semibold);
-	font-size: var(--font-ui-small);
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
-
-/* Field value */
-.fieldValue {
-	color: var(--text-normal);
-	word-break: break-word;
-}
 
 /* Drag state */
 .dragging {
@@ -93,4 +43,92 @@
 .dragOverlay {
 	filter: drop-shadow(0 0.5rem 1rem rgba(0, 0, 0, 0.3));
 	opacity: 0.9;
+}
+
+.header {
+	display: flex;
+	justify-content: start;
+	align-items: baseline;
+	gap: 0.5rem;
+}
+
+.kindAvatar {
+	width: 2rem;
+	height: 1.5rem;
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-weight: 700;
+	font-size: var(--font-size-4-2);
+	text-align: center;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+
+
+.title {
+	font-weight: 700;
+	font-size: var(--font-size-4-2);
+	color: var(--text-normal);
+	margin: 0;
+	letter-spacing: 0.3px;
+}
+
+
+/**
+ * Kind-specific styles with theme-aware color mixing
+ */
+
+.kind {
+	background-color: color-mix(
+		in oklab,
+		var(--kind-color) 10%,
+		var(--background-primary) 100%
+	);
+	border-color: var(--kind-color);
+}
+
+.kind .kindAvatar {
+	background-color: color-mix(
+		in oklab,
+		var(--kind-color) 70%,
+		var(--background-primary) 100%
+	);
+}
+
+.kind-epic {
+	--kind-color: var(--color-purple);
+}
+
+.kind-story {
+	--kind-color: var(--color-green);
+}
+
+.kind-task {
+	--kind-color: var(--color-blue);
+}
+
+.kind-bug {
+	--kind-color: var(--color-red);
+}
+
+.kind-research {
+	--kind-color: var(--color-yellow);
+}
+
+.kind-decision {
+	--kind-color: var(--color-orange);
+}
+
+.kind-retro {
+	--kind-color: var(--color-pink);
+}
+
+.kind-plan {
+	--kind-color: var(--color-cyan);
+}
+
+.kind-unknown {
+	--kind-color: var(--color-gray);
 }

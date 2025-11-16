@@ -29,7 +29,7 @@ export function isKanbanQueryResult(
 export type KanbanGroup = BasesEntryGroup
 export type KanbanBoard = Map<string, KanbanGroup>;
 export type KanbanCardFieldName = ObsidianKanbanbaseQueryResult["properties"];
-export type KanbanConfig = BasesViewConfig;
+export type KanbanConfig = ReturnType<typeof KanbanStateController.createKanbanConfig>;
 
 export type KanbanStateControllerUpdatedEventData = {
   columnOrder: {key: string, label: string}[];
@@ -73,9 +73,9 @@ export class KanbanStateController extends Emittery<{
    */
   update(data: ObsidianKanbanbaseQueryResult): void {
     const fields = data.properties;
-    const config = data.config;
+    const config = KanbanStateController.createKanbanConfig(data.config);
     const columns = KanbanStateController.createColumnMap(data.groupedData);
-    const columnOrder = KanbanStateController.getColumnOrder(config);
+    const columnOrder = KanbanStateController.getColumnOrder(config.columnNames);
     const entries = KanbanStateController.indexEntriesBy(data.data, 'note.path');
     
     
@@ -118,19 +118,15 @@ export class KanbanStateController extends Emittery<{
     return columnMap;
   }
 
-  static getColumnOrder(config: BasesViewConfig): {key: string, label: string}[] {
-    if (!config) {
+  static getColumnOrder(columnNames: string): {key: string, label: string}[] {
+    if (!columnNames) {
       return [];
     }
     // Placeholder implementation
-    console.log("[StateManager] getColumns called", config);
-    const columnNamesValue = config.get("kanban-columnNames");
-    if (!columnNamesValue || typeof columnNamesValue !== "string") {
-      return [];
-    }
+    console.log("[StateManager] getColumns called", columnNames);
 
-    const columnNames = columnNamesValue.split(",").map(name => name.trim());
-    return columnNames.map(name => ({ key: toSlugCase(name), label: toSentenceCase(name) }));
+    const columnNamesArray = columnNames.split(",").map(name => name.trim());
+    return columnNamesArray.map(name => ({ key: toSlugCase(name), label: toSentenceCase(name) }));
   }
 
   async moveCard(cardId: string, targetGroupId: string): Promise<void> {
@@ -140,4 +136,40 @@ export class KanbanStateController extends Emittery<{
     );
     // Actual implementation would update the underlying data source
   }
+
+  static createKanbanConfig (config: BasesViewConfig) {
+    console.log("[KanbanConfig] Creating config from BasesViewConfig:", config);
+    if (!config) {
+      throw new Error("No config provided");
+    }
+
+    const get = (key: string):string => config.get(key)?.toString() || '';
+    const property = (key: string, defaultValue: string): BasesPropertyId => {
+      const value = config.get(key)?.toString();
+
+      if (!value || !value.match(/^(note|file|formula)\..+$/)) {
+        return defaultValue as BasesPropertyId;
+      }
+      
+      return value.toString() as BasesPropertyId;
+    }
+
+    const configData = {
+      columnNames: get("kanban-columnNames") || 'To Do,In Progress,Done',
+      card: {
+        titleField: property("kanban-cardTitleField", "note.title"),
+        tagField: property("kanban-cardTagField", "note.tags"),
+        typeField: property("kanban-cardTypeField", "note.type"),
+        storyPointsField:
+          property("kanban-cardStoryPointsField", "note.storyPoints"),
+        priorityField:
+          property("kanban-cardPriorityField", "note.priority"),
+      },
+    }
+    
+    return configData;
+  }
 }
+
+
+

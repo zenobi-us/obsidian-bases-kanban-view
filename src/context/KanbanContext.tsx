@@ -1,31 +1,33 @@
 import React, { createContext, useContext, PropsWithChildren } from "react";
 import { KanbanStateControllerUpdatedEventData } from "../utils/KanbanStateController";
+import Type from "typebox";
+import Value from "typebox/value";
+import { BasesViewConfig } from "obsidian";
 
 
-export interface KanbanContextType {
+
+interface KanbanContextProps extends PropsWithChildren<{
   error?: Error;
   loading?: boolean;
+  config: KanbanStateControllerUpdatedEventData["config"];
   fields: KanbanStateControllerUpdatedEventData["fields"];
   columns: KanbanStateControllerUpdatedEventData["columns"];
   columnOrder: KanbanStateControllerUpdatedEventData["columnOrder"];
   entries: KanbanStateControllerUpdatedEventData["entries"];
   moveCard: (cardId: string, targetGroupId: string) => Promise<void>;
+}> {}
+
+interface KanbanContextType extends Omit<KanbanContextProps, "children"> {
 }
 
 const KanbanContext = createContext<KanbanContextType | undefined>(
   undefined,
 );
 
-
-
-export interface KanbanProviderProps
-  extends PropsWithChildren,
-    KanbanContextType {}
-
 export const KanbanProvider = ({
   children,
   ...props
-}: KanbanProviderProps): React.ReactElement => {
+}: KanbanContextProps): React.ReactElement => {
   return (
     <KanbanContext.Provider value={props}>
       {children}
@@ -44,3 +46,6 @@ export const useKanban = (): KanbanContextType => {
   }
   return context;
 };
+
+
+
