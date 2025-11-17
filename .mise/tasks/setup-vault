@@ -5,12 +5,17 @@ set -euo pipefail
 
 # Check if VAULT_PATH is set and valid
 if [ -n "${VAULT_PATH:-}" ] && [ -d "$VAULT_PATH/.obsidian" ]; then
-    echo "✅ Using vault path from .env: $VAULT_PATH"
+    echo "✅ Using vault path ${VAULT_PATH} from environment"
     exit 0
 fi
 
+# Print reason for prompting
+[ -z "${VAULT_PATH:-}" ] && echo "⚠️  VAULT_PATH is not set"
+[ -n "${VAULT_PATH:-}" ] && [ ! -d "$VAULT_PATH/.obsidian" ] && echo "⚠️  VAULT_PATH is set but not a valid Obsidian vault: $VAULT_PATH"
+
+
 # VAULT_PATH missing or invalid - ask user
-echo "🔍 Obsidian vault not configured in .env"
+echo "🔍 Obsidian vault not configured"
 echo ""
 echo "Enter the path to your Obsidian vault (the directory containing .obsidian/):"
 read -rp "Vault path: " NEW_VAULT_PATH
