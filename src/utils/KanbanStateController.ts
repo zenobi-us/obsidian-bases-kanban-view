@@ -1,6 +1,7 @@
 import { BasesEntry, BasesEntryGroup, BasesPropertyId, BasesQueryResult, BasesViewConfig, QueryController, App, TFile, FileManager } from "obsidian";
 import Emittery from "emittery";
 import { toSentenceCase, toSlugCase } from "./strings";
+import { IsObject } from "typebox/type";
 
 /**
  * Types representing data coming in from Obsidian Bases API for Kanban view
@@ -137,27 +138,27 @@ export class KanbanStateController extends Emittery<{
   /**
    * Move a card (entry) to a different column (group) by updating its grouping property
    * 
-   * @param cardId - The file path of the card to move
+   * @param entryPath - The file path of the card to move
    * @param targetGroupId - The target column ID (the new value for the grouping property)
    */
-  async moveCard(cardId: string, targetGroupId: string): Promise<void> {
+  async moveCard(entryPath: string, targetGroupId: string): Promise<void> {
     if (!this.config) {
       throw new Error("Kanban config not initialized");
     }
 
     try {
-      console.debug(`[KanbanStateController] moveCard called with cardId: ${cardId}, targetGroupId: ${targetGroupId}`);
+      console.debug(`[KanbanStateController] moveCard called with entryPath: ${entryPath}, targetGroupId: ${targetGroupId}`);
 
       // Validate inputs
-      if (!cardId || !targetGroupId) {
-        throw new Error("cardId and targetGroupId are required");
+      if (!entryPath || !targetGroupId) {
+        throw new Error("entryPath and targetGroupId are required");
       }
 
 
       // Get the file from the vault
-      const file = this.app.vault.getFileByPath(cardId);
+      const file = this.app.vault.getFileByPath(entryPath);
       if (!file) {
-        throw new Error(`File not found for cardId: ${cardId}`);
+        throw new Error(`File not found for entryPath: ${entryPath}`);
       }
 
       // Update the file's frontmatter with the new property value
@@ -166,17 +167,22 @@ export class KanbanStateController extends Emittery<{
       
       await this.app.fileManager.processFrontMatter(
         file,
-        (frontmatter: any) => {
+        // fake the type for frontmatter (it should be an object)
+        (frontmatter: undefined | null | Record<string, unknown>) => {
+          if (!IsObject(frontmatter)) {
+            throw new Error("Invalid frontmatter format");
+          }
+
           frontmatter[propertyName] = targetGroupId;
         }
       );
 
-      console.debug(`[KanbanStateController] Successfully moved card ${cardId} to ${targetGroupId}`);
+      console.debug(`[KanbanStateController] Successfully moved card ${entryPath} to ${targetGroupId}`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(
         `[KanbanStateController] Error moving card: ${errorMessage}`,
-        { cardId, targetGroupId, columnProperty: this.config?.columnProperty }
+        { entryPath, targetGroupId, columnProperty: this.config?.columnProperty }
       );
       throw error;
     }

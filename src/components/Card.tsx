@@ -8,10 +8,6 @@ import classNames from 'classnames';
 /**
  * Card component renders a single kanban card with tiered field rendering
  * 
- * Tier 1: Critical fields (title, status, priority, assignee, due date)
- * Tier 2: Important context (effort, progress, description)
- * Tier 3: Additional details (tags, custom fields, timestamps)
- * 
  * Uses dndkit's useDraggable hook for drag functionality.
  * Components are pure rendering with dndkit handling all drag logic.
  * 
@@ -31,7 +27,7 @@ export const Card = (props: {
         'card',
         styles.kind,
         'card--kind',
-        styles[`kind-${properties.type || ''}`],
+        styles[`kind-${properties.type || 'unknown'}`],
         `card--kind-${properties.type || 'unknown'}`,
         props.className
       )}
