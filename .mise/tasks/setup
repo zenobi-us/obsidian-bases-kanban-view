@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 #MISE description="Install dependencies with pnpm"
-#MISE depends=["setup-vault"]
 
 set -euo pipefail
 
