@@ -76,15 +76,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: jdx/mise-action@bfb9fa0b029db830a8c570757cee683df207a6c5 # v2.4.0
         with:
-          node-version: '20'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
+          experimental: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get pnpm store directory
         id: pnpm-cache
@@ -103,10 +98,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - uses: jdx/mise-action@bfb9fa0b029db830a8c570757cee683df207a6c5 # v2.4.0
-        with:
-          experimental: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build plugin
         run: mise run build
