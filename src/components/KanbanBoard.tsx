@@ -4,9 +4,9 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  closestCorners,
+  pointerWithin
 } from "@dnd-kit/core";
-import {getClientRect} from "@dnd-kit/core"
+import { snapCenterToCursor,  } from "@dnd-kit/modifiers";
 import type { BasesEntry } from "obsidian";
 
 import { useKanban } from "../context/KanbanContext";
@@ -135,13 +135,16 @@ export const KanbanBoard = (): React.ReactElement => {
     <DndContext
       onDragEnd={dragged.onDragEnd}
       onDragStart={dragged.onDragStart}
+      collisionDetection={pointerWithin}
     >
       <div className={classNames(styles.board, "board")}>
         {kanban.columnOrder.map((order) => (
           <Column key={order.key} id={order.key} label={order.label} group={kanban.columns.get(order.key)} />
         ))}
       </div>
-      <DragOverlay>
+      <DragOverlay
+        modifiers={[snapCenterToCursor]}
+      >
          {dragged.entry && (
             <OverlayCard entry={dragged.entry}  />
          )}

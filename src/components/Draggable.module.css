@@ -14,7 +14,6 @@
 }
 
 .draggable--overlay {
-	transform: translate(calc(-100% - 2em),-50%);
 	opacity: 0.8;
 	pointer-events: none;
 }

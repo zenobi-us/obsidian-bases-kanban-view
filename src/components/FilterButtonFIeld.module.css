@@ -1,0 +1,49 @@
+.filterbuttonfield{
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.filterbuttonfield--is-filtering{
+    cursor: default;
+}
+
+.filterbuttonfield_indicator {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: var(--size-4-3);
+    height: var(--size-4-3);
+    border-radius: var(--radius-s);
+    background: var(--background-modifier-border);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.filterbuttonfield--is-filtering .filterbuttonfield_indicator {
+    background: var(--text-accent);
+}
+
+.filterbuttonfield_button{
+    background: var(--background-modifier-border);
+    border: none;
+    border-radius: var(--radius-s);
+    padding: var(--size-2-1) var(--size-2-2);
+    cursor: pointer;
+}
+
+.filterbuttonfield_input{
+    margin-left: var(--size-2);
+    padding: var(--size-2);
+    border: var(--border-width) solid var(--divider-color);
+    border-radius: var(--radius-s);
+    width: calc(100% - 40px);
+}
+
+.filterbuttonfield_input:focus{
+    outline: none;
+    border-color: var(--text-accent);
+    box-shadow: 0 0 0 2px rgba(var(--text-accent-rgb), 0.3);
+}
+
