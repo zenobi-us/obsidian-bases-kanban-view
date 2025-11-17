@@ -40,44 +40,42 @@ describe("KanbanBoard - Drag and Drop Integration", () => {
     } as any;
   });
 
-  it("should have onDragEnd handler registered with DndContext", () => {
-    const { container } = render(
-      <AppProvider app={mockApp}>
-        <KanbanProvider
-          app={mockApp}
-          config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
-          columns={new Map([["todo", mockGroup]])}
-          columnOrder={[{ key: "todo", label: "Todo" }]}
-          fields={["title"]}
-          entries={mockEntries}
-          moveCard={mockMoveCard}
-        >
-          <KanbanBoard />
-        </KanbanProvider>
-      </AppProvider>
-    );
+   it("should have onDragEnd handler registered with DndContext", () => {
+     const { container } = render(
+       <AppProvider app={mockApp}>
+         <KanbanProvider
+           config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
+           columns={new Map([["todo", mockGroup]])}
+           columnOrder={[{ key: "todo", label: "Todo" }]}
+           fields={{} as any}
+           entries={mockEntries}
+           moveCard={mockMoveCard as any}
+         >
+           <KanbanBoard />
+         </KanbanProvider>
+       </AppProvider>
+     );
 
-    // Verify DndContext is rendered
-    const board = container.querySelector(".board");
-    expect(board).toBeTruthy();
-  });
+     // Verify DndContext is rendered
+     const board = container.querySelector(".board");
+     expect(board).toBeTruthy();
+   });
 
-  it("should call moveCard when card is dropped on a column", async () => {
-    const { container } = render(
-      <AppProvider app={mockApp}>
-        <KanbanProvider
-          app={mockApp}
-          config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
-          columns={new Map([["todo", mockGroup]])}
-          columnOrder={[{ key: "todo", label: "Todo" }]}
-          fields={["title"]}
-          entries={mockEntries}
-          moveCard={mockMoveCard}
-        >
-          <KanbanBoard />
-        </KanbanProvider>
-      </AppProvider>
-    );
+   it("should call moveCard when card is dropped on a column", async () => {
+     const { container } = render(
+       <AppProvider app={mockApp}>
+         <KanbanProvider
+           config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
+           columns={new Map([["todo", mockGroup]])}
+           columnOrder={[{ key: "todo", label: "Todo" }]}
+           fields={{} as any}
+           entries={mockEntries}
+           moveCard={mockMoveCard as any}
+         >
+           <KanbanBoard />
+         </KanbanProvider>
+       </AppProvider>
+     );
 
     // Simulate drag and drop by directly calling the event
     const board = container.querySelector(".board");
@@ -88,43 +86,41 @@ describe("KanbanBoard - Drag and Drop Integration", () => {
     // The integration test verifies the component renders correctly
   });
 
-  it("should not call moveCard if drop target is null", async () => {
-    const { container } = render(
-      <AppProvider app={mockApp}>
-        <KanbanProvider
-          app={mockApp}
-          config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
-          columns={new Map([["todo", mockGroup]])}
-          columnOrder={[{ key: "todo", label: "Todo" }]}
-          fields={["title"]}
-          entries={mockEntries}
-          moveCard={mockMoveCard}
-        >
-          <KanbanBoard />
-        </KanbanProvider>
-      </AppProvider>
-    );
+   it("should not call moveCard if drop target is null", async () => {
+     const { container } = render(
+       <AppProvider app={mockApp}>
+         <KanbanProvider
+           config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
+           columns={new Map([["todo", mockGroup]])}
+           columnOrder={[{ key: "todo", label: "Todo" }]}
+           fields={{} as any}
+           entries={mockEntries}
+           moveCard={mockMoveCard as any}
+         >
+           <KanbanBoard />
+         </KanbanProvider>
+       </AppProvider>
+     );
 
     // Verify moveCard is available in context
     expect(mockMoveCard).not.toHaveBeenCalled();
   });
 
-  it("should render column with draggable cards", () => {
-    const { container } = render(
-      <AppProvider app={mockApp}>
-        <KanbanProvider
-          app={mockApp}
-          config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
-          columns={new Map([["todo", mockGroup]])}
-          columnOrder={[{ key: "todo", label: "Todo" }]}
-          fields={["title"]}
-          entries={mockEntries}
-          moveCard={mockMoveCard}
-        >
-          <KanbanBoard />
-        </KanbanProvider>
-      </AppProvider>
-    );
+   it("should render column with draggable cards", () => {
+     const { container } = render(
+       <AppProvider app={mockApp}>
+         <KanbanProvider
+           config={{ columnNames: "Todo,In Progress,Done", card: {} } as any}
+           columns={new Map([["todo", mockGroup]])}
+           columnOrder={[{ key: "todo", label: "Todo" }]}
+           fields={{} as any}
+           entries={mockEntries}
+           moveCard={mockMoveCard as any}
+         >
+           <KanbanBoard />
+         </KanbanProvider>
+       </AppProvider>
+     );
 
     // Should have rendered the board and column
     const board = container.querySelector(".board");
