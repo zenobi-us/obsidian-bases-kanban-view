@@ -2,7 +2,7 @@
   "id": "obsidian-kanban-bases",
   "name": "Kanban Bases View",
   "version": "1.0.0",
-  "minAppVersion": "0.15.0",
+  "minAppVersion": "1.10.3",
   "description": "A kanban view for Obsidian database bases with drag-drop support and virtual scrolling",
   "author": "zenobi-us",
   "authorUrl": "https://github.com/zenobi-us",
