@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    branches:
+      # for prod releases
+      - main
+      # for hotfixes
+      - release/*
+
+env:
+  HUSKY: 0 # https://typicode.github.io/husky/how-to.html#ci-server-and-docker
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  actions: read
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  Process:
+    runs-on: ubuntu-latest
+    outputs:
+      payload: ${{ steps.report.outputs.payload }}
+      paths_released: ${{ steps.release-please.outputs.paths_released }}
+      releases_created: ${{ steps.release-please.outputs.releases_created }}
+      prs_created: ${{ steps.release-please.outputs.prs_created }}
+      prs: ${{ steps.release-please.outputs.prs }}
+      pr: ${{ steps.release-please.outputs.pr }}
+      sha: ${{ steps.release-please.outputs.sha }}
+      mode: ${{ steps.config_filename.outputs.mode }}
+    steps:
+      - id: config_filename
+        env:
+          DEFAULT_RELEASE_CONFIG_FILE: release-please-config.json
+          HOTFIX_RELEASE_CONFIG_FILE: release-please-config.hotfix.json
+        run: |
+          case "${{ github.ref_name }}" in
+            release/*)
+              echo "config_filename=${HOTFIX_RELEASE_CONFIG_FILE}" >> $GITHUB_OUTPUT
+              echo "mode=hotfix" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "config_filename=${DEFAULT_RELEASE_CONFIG_FILE}" >> $GITHUB_OUTPUT
+              echo "mode=feature" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - uses: googleapis/release-please-action@v4
+        id: release-please
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: ".github/${{ steps.config_filename.outputs.config_filename }}"
+          manifest-file: ".github/release-please-manifest.json"
+          target-branch: "${{ github.ref_name }}"
+
+      - name: Print Release Data
+        id: report
+        run: |
+          echo 'Release Data:'
+          echo '${{ toJSON(steps.release-please.outputs) }}'
+          echo "payload=$(jq -rc . <<< '${{ toJSON(steps.release-please.outputs) }}')" >> $GITHUB_OUTPUT
+
+  #
+  # Build and upload release artifacts
+  #
+  Build:
+    needs: Process
+    runs-on: ubuntu-latest
+    if: ${{ needs.Process.outputs.releases_created == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - uses: jdx/mise-action@bfb9fa0b029db830a8c570757cee683df207a6c5 # v2.4.0
+        with:
+          experimental: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build plugin
+        run: mise run build
+
+      - name: Get version from manifest
+        id: version
+        shell: bash
+        run: |
+          VERSION=$(jq -r '.version' manifest.json)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Upload plugin artifacts to release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.version.outputs.tag }}" \
+            dist/main.js \
+            dist/manifest.json \
+            dist/styles.css \
+            --clobber
