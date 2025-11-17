@@ -7,6 +7,14 @@ set -euo pipefail
 echo "🔍 Running checks..."
 echo ""
 
+echo "🔧 Environment:"
+node -v
+npm -v
+pnpm -v
+echo ""
+echo "Vault Path: ${VAULT_PATH:-Not Set}"
+echo ""
+
 # TypeCheck
 echo "📝 TypeCheck..."
 tsc -noEmit

@@ -46,4 +46,8 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run checks
-        run: mise run check
+        run: |
+          VAULT_PATH="$(mktemp -d)/FakeObsidianVault/.obsidian/plugins"
+          mkdir -p "$VAULT_PATH"
+          echo VAULT_PATH="$VAULT_PATH" \
+            mise run check
