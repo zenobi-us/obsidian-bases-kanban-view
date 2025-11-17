@@ -16,7 +16,7 @@ Check `mise tasks` before assuming the normal place.
 {
   "id": "obsidian-kanban-bases",
   "name": "Kanban Bases View",
-  "version": "2.0.0",
+  "version": "1.0.0",
   "minAppVersion": "1.10.3",
   "description": "A kanban view for Obsidian database bases with drag-drop support",
   "author": "zenobi-us",
@@ -26,7 +26,7 @@ Check `mise tasks` before assuming the normal place.
 }
 ```
 
-- **version:** Matches package.json (synced by release-please via extra-files)
+- **version:** Synced FROM package.json (primary) via release-please extra-files configuration
 - **minAppVersion:** Obsidian API compatibility requirement
 - **id:** Plugin identifier (used by Obsidian registry)
 - **All fields required:** Don't strip fields to "simplify" - each is needed by Obsidian
@@ -52,7 +52,7 @@ On first run of `pnpm dev`, you'll be prompted to enter your Obsidian vault path
 **Naming:** Classes use PascalCase, methods/properties use camelCase. Constants use UPPER_SNAKE_CASE (e.g., `KANBAN_VIEW_TYPE`).  
 **NeverNester**: Avoid deep nesting by early returns or helper functions.
 **Error Handling:** Wrap data access in try-catch for localStorage/JSON parsing. Log errors with `[KanbanBasesView]` prefix. Always check null/undefined before accessing properties.  
-**Logging:** Use `console.debug()` and `console.warn()` with `[KanbanBasesView]` prefix for debugging. Log meaningful state during operations (see src/views/KanbanBasesView.ts line 75-79 as reference).
+**Logging:** Use `console.debug()` and `console.warn()` with `[KanbanBasesView]` prefix for debugging. Log meaningful state during operations (see src/views/KanbanBasesView.tsx line 75-79 as reference).
 
 ## Key Architecture
 
@@ -107,7 +107,7 @@ KanbanStateController.update(data)
     └─ Emits: 'updated' event
     ↓
 KanbanBasesView.render(data)
-    ├─ Creates React root (if needed)
+    ├─ Always recreates React root on each update
     └─ Renders <KanbanView /> with parsed data
     ↓
 React Components
@@ -151,5 +151,5 @@ KanbanStateController.moveCard()
 ## Release & Version Management
 
 **Version Sync:** manifest.json and package.json are synced via release-please extra-files configuration
-- Primary file: manifest.json (source of truth)
-- Extra file: package.json (auto-synced by release-please)
+- Primary file: package.json (source of truth)
+- Extra file: manifest.json (auto-synced by release-please)
