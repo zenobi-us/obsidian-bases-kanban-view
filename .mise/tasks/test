@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Run vitest"
+#MISE depends=["setup"]
 
 set -euo pipefail
 
