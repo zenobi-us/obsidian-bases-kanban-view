@@ -49,5 +49,5 @@ jobs:
         run: |
           VAULT_PATH="$(mktemp -d)/FakeObsidianVault/.obsidian/plugins"
           mkdir -p "$VAULT_PATH"
-          echo VAULT_PATH="$VAULT_PATH" \
+          env VAULT_PATH="$VAULT_PATH" \
             mise run check
