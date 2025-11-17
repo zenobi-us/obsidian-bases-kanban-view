@@ -46,7 +46,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install mise
-        uses: jdx/mise-action@v2
+        uses: jdx/mise-action@bfb9fa0b029db830a8c570757cee683df207a6c5 # v2.4.0
+        with:
+          experimental: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build plugin
         run: mise run build
