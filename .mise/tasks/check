@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#MISE description="Run typecheck, lint, and tests"
+#MISE depends=["setup"]
+
+set -euo pipefail
+
+echo "🔍 Running checks..."
+echo ""
+
+# TypeCheck
+echo "📝 TypeCheck..."
+tsc -noEmit
+echo "✅ TypeCheck passed"
+echo ""
+
+# Lint
+echo "🎨 Linting..."
+if [ -f ".eslintrc.json" ] || [ -f ".eslintrc.js" ] || [ -f ".eslintrc.yml" ]; then
+  eslint src --ext .ts,.tsx
+  echo "✅ Linting passed"
+else
+  echo "⚠️  ESLint config not found, skipping"
+fi
+echo ""
+
+# Tests
+echo "🧪 Running tests..."
+vitest run
+echo "✅ Tests passed"
+echo ""
+
+echo "✅ All checks passed!"
