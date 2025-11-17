@@ -52,7 +52,7 @@ On first run of `pnpm dev`, you'll be prompted to enter your Obsidian vault path
 **Naming:** Classes use PascalCase, methods/properties use camelCase. Constants use UPPER_SNAKE_CASE (e.g., `KANBAN_VIEW_TYPE`).  
 **NeverNester**: Avoid deep nesting by early returns or helper functions.
 **Error Handling:** Wrap data access in try-catch for localStorage/JSON parsing. Log errors with `[KanbanBasesView]` prefix. Always check null/undefined before accessing properties.  
-**Logging:** Use `console.debug()` and `console.warn()` with `[KanbanBasesView]` prefix for debugging. Log meaningful state during operations (see src/views/KanbanBasesView.ts line 75-79 as reference).
+**Logging:** Use `console.debug()` and `console.warn()` with `[KanbanBasesView]` prefix for debugging. Log meaningful state during operations (see src/views/KanbanBasesView.tsx line 75-79 as reference).
 
 ## Key Architecture
 
@@ -107,7 +107,7 @@ KanbanStateController.update(data)
     └─ Emits: 'updated' event
     ↓
 KanbanBasesView.render(data)
-    ├─ Creates React root (if needed)
+    ├─ Always recreates React root on each update
     └─ Renders <KanbanView /> with parsed data
     ↓
 React Components
