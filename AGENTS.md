@@ -136,7 +136,7 @@ KanbanStateController.moveCard()
 
 **Key Issues & Known Limitations:**
 - React root recreation: KanbanBasesView.render() unmounts/recreates root on every update (should reuse for perf)
-- Frontmatter null-safety: moveCard() throws on undefined frontmatter (should initialize empty object)
+- Frontmatter null-safety: moveCard() doesn't handle null/undefined frontmatter before IsObject() check (should initialize empty object when null/undefined)
 - Performance tests skipped: .skip() on all benchmarks - verify <100ms render time before shipping
 - Error boundary missing: No error boundary wrapper - single component error crashes entire plugin
 
