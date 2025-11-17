@@ -151,5 +151,5 @@ KanbanStateController.moveCard()
 ## Release & Version Management
 
 **Version Sync:** manifest.json and package.json are synced via release-please extra-files configuration
-- Primary file: manifest.json (source of truth)
-- Extra file: package.json (auto-synced by release-please)
+- Primary file: package.json (source of truth)
+- Extra file: manifest.json (auto-synced by release-please)
