@@ -153,13 +153,3 @@ KanbanStateController.moveCard()
 **Version Sync:** manifest.json and package.json are synced via release-please extra-files configuration
 - Primary file: manifest.json (source of truth)
 - Extra file: package.json (auto-synced by release-please)
-- See: basicmemory project for "How to Configure release-please for Multi-File Version Updates"
-
-**Current Version:** 2.0.0 (both files)
-
-**Next Release:** 2.0.1 (patch) - fixes 7 code issues before feature work
-- React root lifecycle optimization
-- Frontmatter null-safety handling
-- Error boundary implementation
-- Performance test enablement
-- Null-safety checks in components
