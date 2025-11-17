@@ -6,6 +6,7 @@ shellcheck = "latest"
 watchexec = "latest"
 
 [env]
+_.file = ".env"
 _.path = [
     # adds an absolute path
     "~/.local/share/bin",

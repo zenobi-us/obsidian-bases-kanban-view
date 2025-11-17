@@ -16,11 +16,9 @@ export default defineConfig(({ mode }) => {
   const inProd = mode === 'production';
 
   // Vault path from .notes/VAULT_PATH
-  let vaultPath = '';
-  try {
-    vaultPath = fs.readFileSync('.notes/VAULT_PATH', 'utf-8').trim();
-  } catch (e) {
-    console.warn('⚠️  .notes/VAULT_PATH not found - will output to dist/ instead');
+  let vaultPath = process.env.VAULT_PATH;
+  if (vaultPath && vaultPath.startsWith('~')) {
+    vaultPath = path.join(process.env.HOME, vaultPath.slice(1));
   }
 
   const PLUGIN_PATH = vaultPath ? path.join(vaultPath, '.obsidian', 'plugins', manifest.id) : null;
