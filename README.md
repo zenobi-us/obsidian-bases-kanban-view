@@ -4,7 +4,6 @@ A custom Obsidian Bases view that displays data in a **kanban board layout** wit
 
 <img width="1805" height="1129" alt="Kanban board view in Obsidian Bases showing draggable cards organized across multiple columns" src="https://github.com/user-attachments/assets/f2fe02c8-6195-429e-be88-26c3965344f8" />
 
-
 ## Features
 
 - **Configurable Grouping** - Group items using standard Bases properties
