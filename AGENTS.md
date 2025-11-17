@@ -18,7 +18,7 @@ Check `mise tasks` before assuming the normal place.
   "name": "Kanban Bases View",
   "version": "2.0.0",
   "minAppVersion": "1.10.3",
-  "description": "A kanban view for Obsidian database bases with drag-drop support",
+  "description": "A kanban view for Obsidian database bases with drag-drop support and virtual scrolling",
   "author": "zenobi-us",
   "authorUrl": "https://github.com/zenobi-us",
   "fundingUrl": "https://github.com/sponsors/zenobi-us",
@@ -29,7 +29,16 @@ Check `mise tasks` before assuming the normal place.
 - **version:** Synced FROM package.json (primary) via release-please extra-files configuration
 - **minAppVersion:** Obsidian API compatibility requirement
 - **id:** Plugin identifier (used by Obsidian registry)
-- **All fields required:** Don't strip fields to "simplify" - each is needed by Obsidian
+- **All 9 fields required:** Don't strip fields to "simplify"—each of the following is needed by Obsidian:
+  - `id`
+  - `name`
+  - `version`
+  - `minAppVersion`
+  - `description`
+  - `author`
+  - `authorUrl`
+  - `fundingUrl`
+  - `isDesktopOnly`
 
 **Example of WRONG approach (DON'T DO THIS):**
 ```json
@@ -61,7 +70,7 @@ On first run of `pnpm dev`, you'll be prompted to enter your Obsidian vault path
 - **Entry:** `src/main.ts` (24 lines)
   - Registers plugin with Obsidian Bases API
   - Creates Kanban view factory
-  - Loads global CSS styles
+
 
 - **View:** `src/views/KanbanBasesView.tsx` (140+ lines)
   - Extends `BasesView` (Obsidian Bases API)
