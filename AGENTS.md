@@ -26,7 +26,7 @@ Check `mise tasks` before assuming the normal place.
 }
 ```
 
-- **version:** Matches package.json (synced by release-please via extra-files)
+- **version:** Synced FROM package.json (primary) via release-please extra-files configuration
 - **minAppVersion:** Obsidian API compatibility requirement
 - **id:** Plugin identifier (used by Obsidian registry)
 - **All fields required:** Don't strip fields to "simplify" - each is needed by Obsidian
