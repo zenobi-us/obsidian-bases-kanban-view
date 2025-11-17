@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1](https://github.com/zenobi-us/obsidian-bases-kanban-view/compare/v2.0.0...v2.0.1) (2025-11-17)
+
+
+### Bug Fixes
+
+* **manifest:** restore valid plugin metadata structure ([#5](https://github.com/zenobi-us/obsidian-bases-kanban-view/issues/5)) ([e2e80f0](https://github.com/zenobi-us/obsidian-bases-kanban-view/commit/e2e80f047fb1ba94685ddc81794c836fc676be30))
+
 ## [2.0.0](https://github.com/zenobi-us/obsidian-bases-kanban-view/compare/v1.0.0...v2.0.0) (2025-11-17)
 
 
