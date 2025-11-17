@@ -16,7 +16,7 @@ Check `mise tasks` before assuming the normal place.
 {
   "id": "obsidian-kanban-bases",
   "name": "Kanban Bases View",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "minAppVersion": "1.10.3",
   "description": "A kanban view for Obsidian database bases with drag-drop support",
   "author": "zenobi-us",
@@ -26,7 +26,7 @@ Check `mise tasks` before assuming the normal place.
 }
 ```
 
-- **version:** Synced FROM package.json (primary) via release-please extra-files configuration
+- **version:** Matches package.json (synced by release-please via extra-files)
 - **minAppVersion:** Obsidian API compatibility requirement
 - **id:** Plugin identifier (used by Obsidian registry)
 - **All fields required:** Don't strip fields to "simplify" - each is needed by Obsidian
