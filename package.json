@@ -1,6 +1,6 @@
 {
   "name": "obsidian-kanban-bases",
-  "version": "4.0.0",
+  "version": "0.0.1",
   "description": "Kanban view for Obsidian based on database bases",
   "main": "main.js",
   "types": "main.d.ts",
