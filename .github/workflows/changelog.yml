@@ -52,3 +52,11 @@ jobs:
           config-file: ".github/${{ steps.config_filename.outputs.config_filename }}"
           manifest-file: ".github/release-please-manifest.json"
           target-branch: "${{ github.ref_name }}"
+
+      - name: Create snapshot branch
+        if: steps.release-please.outputs.new-release-created == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b snapshot/${{ steps.release-please.outputs.new_version }}
+          git push origin snapshot/${{ steps.release-please.outputs.new_version }}

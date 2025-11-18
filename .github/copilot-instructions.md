@@ -268,31 +268,63 @@ describe('ComponentName', () => {
 - Checks include: TypeScript compilation, linting, tests
 - Release automation via release-please
 
+## Release Process
+
+1. Work on branches based on `main`
+2. Commits message style on your branch doesn't matter
+3. Make your PR against `main`
+4. The PR title of your PR MUST follow conventional commit style:
+   - `fix: description` for bug fixes
+   - `feat: description` for new features
+   - `chore: description` for maintenance tasks
+5. Once PR is merged, release-please will manage changelog, version bump and git tags
+6. When new git tag is pushed starting with `v`, GitHub Actions will build the plugin and create a release with attached artifacts.
+
+### Pre Releases
+
+- tag any commit on main with `vX.Y.Z-rc.N` to trigger a pre-release build
+- wait for GitHub Actions to create the release
+- download the artifact from the release page
+
+### Hotfix Releases
+
+- When merging a PR from a normal release, there should be a snapshot branch for that release (e.g., `release-v1.2.x`)
+- Create a PR against that snapshot branch with the hotfix changes
+- The PR title MUST follow conventional commit style as well
+- Once merged, release-please will create a new patch release (e.g., `v1.2.1`)
+- The new git tag will trigger GitHub Actions to build and create the release
+
+### Release-Please Configuration Notes
+
+- `.github/release-please-config.json` defines the release process for normal releases.
+  - This bumps minor versions for new features.
+- `.github/release-please-config.hotfix.json` defines the release process for hotfix.
+  - This bumps patch versions for commits.
+- There is two separate configurations to allow hotfix releases without affecting the normal release cadence.
+- Both configurations use `node` release type, which means they update the `package.json` version. They also have `extra-files` configured to update `manifest.json` version as well.
+- `.github/release-please-manifest.json` tracks the last released version.
 ## Known Limitations and Context
 
 ### Not Yet Implemented
-- Property updates from drag-drop not persisted (see `updateEntryProperty()` stub in `KanbanBasesView.ts`)
 - Swimlanes (2D grouping)
 - Filter integration
 - Create/edit items inline
 - Keyboard navigation
-- Custom card templates
-- Using a note as the template for rendering cards
+- Custom card templates: Using a note as the template for rendering cards
 
 ### Technical Debt
-- Grouping is manual (no API support from Obsidian Bases yet)
 - Virtual scrolling optimization for very large datasets (1000+ items)
 
 ### Obsidian API Integration
 - Plugin uses Obsidian Bases API (still evolving)
 - View registration: `this.registerView(KANBAN_VIEW_TYPE, ...)`
 - Data access: `this.data.data` from base view
-- Property updates: Waiting for stable API
+- Property updates: Uses obsidian API methods to modify note properties
 
 ### Performance Considerations
-- Virtual scrolling kicks in for columns with 30+ items
-- Drag-drop operations are optimized with React memoization
-- Re-rendering minimized with proper React hooks dependencies
+- Drag-drop operations are handled by @dnd-kit
+- No performance optimizations for very large datasets yet
+- No virtual scrolling implemented for columns
 
 ## Agent-Specific Notes
 
