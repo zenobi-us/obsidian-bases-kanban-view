@@ -5,7 +5,14 @@
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
-      "version-file": "manifest.json",
+      "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "manifest.json",
+          "jsonpath": "$.version"
+        }
+      ],
       "bump-minor-pre-major": false,
       "bump-patch-for-minor-pre-major": false
     }

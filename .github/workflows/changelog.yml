@@ -1,0 +1,53 @@
+name: Changelog
+
+on:
+  push:
+    branches:
+      # for prod releases
+      - main
+      # for hotfixes
+      - release/*
+
+env:
+  HUSKY: 0 # https://typicode.github.io/husky/how-to.html#ci-server-and-docker
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine release config based on branch
+        id: config_filename
+        env:
+          DEFAULT_RELEASE_CONFIG_FILE: release-please-config.json
+          HOTFIX_RELEASE_CONFIG_FILE: release-please-config.hotfix.json
+        run: |
+          case "${{ github.ref_name }}" in
+            release/*)
+              echo "config_filename=${HOTFIX_RELEASE_CONFIG_FILE}" >> $GITHUB_OUTPUT
+              echo "mode=hotfix" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "config_filename=${DEFAULT_RELEASE_CONFIG_FILE}" >> $GITHUB_OUTPUT
+              echo "mode=feature" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - uses: googleapis/release-please-action@v4
+        id: release-please
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: ".github/${{ steps.config_filename.outputs.config_filename }}"
+          manifest-file: ".github/release-please-manifest.json"
+          target-branch: "${{ github.ref_name }}"
