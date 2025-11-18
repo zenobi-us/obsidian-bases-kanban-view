@@ -24,6 +24,7 @@ jobs:
   Process:
     runs-on: ubuntu-latest
     outputs:
+      tag: ${{ steps.release-please.outputs.tag-name }}
       payload: ${{ steps.report.outputs.payload }}
       paths_released: ${{ steps.release-please.outputs.paths_released }}
       releases_created: ${{ steps.release-please.outputs.releases_created }}
@@ -101,21 +102,12 @@ jobs:
 
       - name: Build plugin
         run: mise run build
-
-      - name: Get version from manifest
-        id: version
-        shell: bash
-        run: |
-          VERSION=$(jq -r '.version' manifest.json)
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
-
       - name: Upload plugin artifacts to release
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ steps.version.outputs.tag }}" \
+          gh release upload "${{ needs.Process.outputs.tag }}" \
             dist/main.js \
             dist/manifest.json \
             dist/styles.css \
