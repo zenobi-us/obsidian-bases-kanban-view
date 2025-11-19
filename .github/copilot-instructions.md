@@ -288,8 +288,8 @@ describe('ComponentName', () => {
 
 ### Hotfix Releases
 
-- When merging a PR from a normal release, there should be a snapshot branch for that release (e.g., `release-v1.2.x`)
-- Create a PR against that snapshot branch with the hotfix changes
+- When merging a PR from a normal release, there should be a snapshot branch for that release (e.g., `snapshot/1.2.0`)
+- Create a PR against the release/* branch (created from the snapshot) with the hotfix changes
 - The PR title MUST follow conventional commit style as well
 - Once merged, release-please will create a new patch release (e.g., `v1.2.1`)
 - The new git tag will trigger GitHub Actions to build and create the release
