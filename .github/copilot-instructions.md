@@ -300,7 +300,7 @@ describe('ComponentName', () => {
   - This bumps minor versions for new features.
 - `.github/release-please-config.hotfix.json` defines the release process for hotfix.
   - This bumps patch versions for commits.
-- There is two separate configurations to allow hotfix releases without affecting the normal release cadence.
+- There are two separate configurations to allow hotfix releases without affecting the normal release cadence.
 - Both configurations use `node` release type, which means they update the `package.json` version. They also have `extra-files` configured to update `manifest.json` version as well.
 - `.github/release-please-manifest.json` tracks the last released version.
 ## Known Limitations and Context

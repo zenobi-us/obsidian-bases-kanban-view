@@ -54,9 +54,9 @@ jobs:
           target-branch: "${{ github.ref_name }}"
 
       - name: Create snapshot branch
-        if: steps.release-please.outputs.new-release-created == 'true'
+        if: steps.release-please.outputs.releases_created == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b snapshot/${{ steps.release-please.outputs.new_version }}
-          git push origin snapshot/${{ steps.release-please.outputs.new_version }}
+          git checkout -b snapshot/${{ fromJson(steps.release-please.outputs.releases).'.'.version }}
+          git push origin snapshot/${{ fromJson(steps.release-please.outputs.releases).'.'.version }}
